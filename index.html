@@ -241,7 +241,7 @@
         // --- STATE ---
         let gameState = 'START'; 
         let currentWorldIndex = 0;
-        let player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+        let player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
         let currentZone = null, currentEnemy = null, currentQuestion = null;
         let battleLog = [], enemyIndex = 0, showZoneInfo = null, questionCountInBattle = 0;
         let showCheerMessage = false;
@@ -262,12 +262,16 @@
         function unlockZone(zoneId) {
             if (player.characterId === 'book_immortal') return true;
             const world = GAME_DATA.worlds[currentWorldIndex];
-            const index = world.zones.findIndex(z => z.id === zoneId);
-            if (index === 0) return true;
             
-            // Special handling for Boss Zone: Unlocked if the previous zone (last normal zone) is completed
-            const prevZoneId = world.zones[index - 1].id;
-            return player.completedZones.includes(prevZoneId);
+            // Check if it is a boss zone
+            if (zoneId.startsWith('boss')) {
+                const normalZones = world.zones.filter(z => !z.id.startsWith('boss'));
+                // Check if all normal zones are completed
+                return normalZones.every(z => player.completedZones.includes(z.id));
+            }
+            
+            // Normal zones are always unlocked
+            return true;
         }
 
         function getUnsolvedQuestion(enemy) {
@@ -500,10 +504,11 @@
             const currentPlayerName = player.name;
             const defaultCharName = CHARACTERS.find(c => c.id === player.characterId).name;
             const inputValue = (currentPlayerName && currentPlayerName !== defaultCharName) ? currentPlayerName : '';
+            const currentWorldScore = player.worldScores[currentWorldIndex] || 0;
 
             showModal({
                 title: '上傳戰績',
-                message: '請輸入您的名字以便登錄英雄榜：',
+                message: `上傳目前世界總積分: ${currentWorldScore}\n請輸入您的名字以便登錄英雄榜：`,
                 inputPlaceholder: '請輸入名字 (如: 601 王小明)',
                 inputValue: inputValue,
                 onConfirm: (userName) => {
@@ -515,7 +520,7 @@
                         role: CHARACTERS.find(c => c.id === player.characterId).name,
                         world: GAME_DATA.worlds[currentWorldIndex].title,
                         level: player.level,
-                        score: battleStats.score // 改為上傳本次戰鬥的計算積分
+                        score: currentWorldScore // 上傳當前世界的累積總分
                     };
 
                     addLog("正在上傳戰績...");
@@ -597,7 +602,7 @@
         
         function returnToMainMenu() { 
             gameState = 'START';
-            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
             battleLog = [];
             currentWorldIndex = 0;
             renderApp();
@@ -605,7 +610,7 @@
 
         function forgetClothes() {
             gameState = 'START';
-            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
             battleLog = [];
             currentWorldIndex = 0;
             showCheerMessage = true;
@@ -618,7 +623,7 @@
 
         function selectCharacter(charId) {
             const char = CHARACTERS.find(c => c.id === charId);
-            player = { name: char.name, role: char.role, hp: char.stats.hp, maxHp: char.stats.hp, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: char.id, stats: char.stats, solvedQuestionIds: [] };
+            player = { name: char.name, role: char.role, hp: char.stats.hp, maxHp: char.stats.hp, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: char.id, stats: char.stats, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
             gameState = 'MAP';
             battleLog = char.id === 'book_immortal' ? ['歡迎書仙！', '攻略模式開啟。'] : [`歡迎 ${char.name}！`, `能力：${char.abilityName}`];
             if(char.id === 'book_immortal') {
@@ -726,17 +731,22 @@
         }
 
         function handleEnemyDefeat(enemy) {
-            // 計算積分
+            // 計算本關積分
             const endTime = Date.now();
             const durationSec = Math.floor((endTime - battleStats.startTime) / 1000);
             const accuracy = battleStats.attempts > 0 ? (battleStats.correct / battleStats.attempts) : 0;
             const timeBonus = Math.max(0, (300 - durationSec) * 10); // 300秒內，每快1秒+10分
             const baseScore = battleStats.correct * 1000;
             
-            // 核心公式： (答對數 * 1000) * (準確率^2) + 時間紅利
-            const finalScore = Math.floor(baseScore * Math.pow(accuracy, 2) + timeBonus);
+            const levelScore = Math.floor(baseScore * Math.pow(accuracy, 2) + timeBonus);
             
-            battleStats.score = finalScore;
+            // 累積當前世界的總分
+            if (!player.worldScores[currentWorldIndex]) {
+                 player.worldScores[currentWorldIndex] = 0;
+            }
+            player.worldScores[currentWorldIndex] += levelScore;
+
+            battleStats.score = levelScore;
             battleStats.duration = durationSec;
             battleStats.accuracy = (accuracy * 100).toFixed(1);
 
@@ -834,6 +844,7 @@
                                 <ul class="list-disc pl-4 space-y-1 text-slate-400">
                                     <li><strong>極度重視答對率</strong>：因為是平方計算，錯一題分數會扣非常多！(例：答對率 80%，分數只剩 64%)</li>
                                     <li><strong>時間加成</strong>：基準 300 秒，每提早 1 秒 + 10 分。</li>
+                                    <li><strong>分世界計算</strong>：每個世界的積分是分開累積的，無法帶到下一個世界。</li>
                                     <li><strong>策略建議</strong>：寧可慢一點想清楚，也不要亂猜喔！</li>
                                 </ul>
                             </div>
@@ -957,16 +968,18 @@
             const normalZones = world.zones.filter(z => !z.id.startsWith('boss'));
             const bossZone = world.zones.find(z => z.id.startsWith('boss'));
             
-            for (let i=0; i<normalZones.length-1; i++) {
-                const s = normalZones[i].mapPos, e = normalZones[i+1].mapPos;
-                const unlocked = unlockZone(normalZones[i+1].id);
-                svg += `<line x1="${s.left}" y1="${s.top}" x2="${e.left}" y2="${e.top}" stroke="${unlocked?'#f59e0b':'#475569'}" stroke-width="4" stroke-dasharray="${unlocked?'0':'5,5'}" />`;
-            }
-            if (bossZone && normalZones.length > 0) {
-                const lastNormal = normalZones[normalZones.length - 1];
-                const s = lastNormal.mapPos, e = bossZone.mapPos;
-                const unlocked = unlockZone(bossZone.id);
-                svg += `<line x1="${s.left}" y1="${s.top}" x2="${e.left}" y2="${e.top}" stroke="${unlocked?'#ef4444':'#475569'}" stroke-width="4" stroke-dasharray="${unlocked?'0':'5,5'}" />`;
+            // Draw lines from all normal zones to the boss to indicate requirement
+            if (bossZone) {
+                 const bossUnlocked = unlockZone(bossZone.id);
+                 normalZones.forEach(z => {
+                     const s = z.mapPos;
+                     const e = bossZone.mapPos;
+                     // Line is active if the specific normal zone is completed (contributing power to unlock boss)
+                     const isZoneCompleted = player.completedZones.includes(z.id);
+                     
+                     // Use a subtle line style
+                     svg += `<line x1="${s.left}" y1="${s.top}" x2="${e.left}" y2="${e.top}" stroke="${isZoneCompleted ? '#f59e0b' : '#334155'}" stroke-width="2" stroke-dasharray="${bossUnlocked ? '0' : '5,5'}" opacity="0.6" />`;
+                 });
             }
 
             let html = `<div class="relative w-full h-full overflow-hidden flex flex-col"><div class="absolute top-4 left-4 z-10 text-white font-bold text-xl drop-shadow-md">${world.title}</div><div class="relative flex-1 bg-grid-pattern"><svg class="absolute inset-0 w-full h-full pointer-events-none z-0">${svg}</svg>`;
@@ -1059,6 +1072,8 @@
                 ? `<button disabled class="px-8 py-3 bg-slate-700 text-slate-500 rounded-lg font-bold shadow-lg cursor-not-allowed">已上傳</button>`
                 : `<button onclick="uploadScore()" class="px-8 py-3 bg-amber-600 text-white rounded-lg font-bold shadow-lg animate-pulse">上傳戰績</button>`;
 
+            const currentWorldScore = player.worldScores[currentWorldIndex] || 0;
+
             return `<div class="flex flex-col items-center justify-center h-full p-6 text-center animate-fade-in">
                 <div class="text-6xl mb-4 animate-bounce-custom">🏆</div>
                 <h1 class="text-3xl font-bold text-green-400 mb-2">攻略成功！</h1>
@@ -1074,9 +1089,13 @@
                         <span class="text-slate-400">🎯 答對率</span>
                         <span class="font-mono text-white">${battleStats.accuracy}%</span>
                     </div>
-                    <div class="border-t border-slate-700 my-2 pt-2 flex justify-between items-center">
-                        <span class="text-amber-500 font-bold">✨ 總積分</span>
-                        <span class="font-mono text-2xl text-amber-400 font-bold">${battleStats.score}</span>
+                     <div class="flex justify-between items-center mb-2 border-t border-slate-700 pt-2">
+                        <span class="text-amber-200">➕ 本關得分</span>
+                        <span class="font-mono text-white font-bold">+${battleStats.score}</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-amber-500 font-bold">✨ 本世界總分</span>
+                        <span class="font-mono text-2xl text-amber-400 font-bold">${currentWorldScore}</span>
                     </div>
                 </div>
 
