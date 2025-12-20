@@ -32,14 +32,13 @@
         ::-webkit-scrollbar-thumb:hover { background: #475569; }
         .bg-grid-pattern { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
         
-        .guide-content h3 { color: #fbbf24; font-size: 1.15rem; font-weight: 900; margin-top: 1.2rem; margin-bottom: 0.6rem; border-left: 4px solid #f59e0b; padding-left: 0.5rem; }
+        .guide-content h3 { color: #fbbf24; font-size: 1.1rem; font-weight: bold; margin-top: 1rem; margin-bottom: 0.5rem; border-bottom: 1px solid #4b5563; padding-bottom: 0.25rem; }
         .guide-content h3:first-child { margin-top: 0; }
-        .guide-content p { margin-bottom: 0.5rem; color: #cbd5e1; line-height: 1.7; font-size: 0.95rem; }
+        .guide-content p { margin-bottom: 0.5rem; color: #cbd5e1; line-height: 1.6; font-size: 0.95rem; }
         .guide-content strong { color: #fff; font-weight: 900; }
-        .guide-content .highlight { color: #f472b6; font-weight: bold; background: rgba(244, 114, 182, 0.1); padding: 0 2px; border-radius: 2px; }
-        .guide-content ul { list-style-type: disc; padding-left: 1.2rem; margin-bottom: 0.8rem; color: #94a3b8; font-size: 0.95rem; }
-        .guide-content li { margin-bottom: 0.35rem; }
-        .guide-content .note { background: #1e293b; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #334155; margin-top: 0.5rem; font-size: 0.9rem; color: #93c5fd; }
+        .guide-content .highlight { color: #f472b6; font-weight: bold; }
+        .guide-content ul { list-style-type: disc; padding-left: 1.2rem; margin-bottom: 0.5rem; color: #94a3b8; font-size: 0.9rem; }
+        .guide-content li { margin-bottom: 0.25rem; }
 
         /* Leaderboard Table Alignment */
         .leaderboard-table { table-layout: fixed; }
@@ -79,21 +78,22 @@
 
     <script>
         // --- 設定 ---
-        // 請務必確認這裡的網址是您「最新部署」的網址
+        // 您的專屬 GAS 後端網址
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxUjnGfXcFhDSSfWCHUvRhSgoZ_lY_Bd2l-50O5i3KSKMq88Rjhpaq2Tc_jDQppe_tiUQ/exec";
         
         // --- UI UTILS ---
-        function showModal({ title, message, inputPlaceholder, showCancel = true, onConfirm }) {
+        function showModal({ title, message, inputPlaceholder, inputValue, showCancel = true, onConfirm }) {
             const modal = document.getElementById('custom-modal');
             document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-content').innerHTML = message || ''; // Changed to innerHTML to support formatted text
+            document.getElementById('modal-content').innerText = message || '';
             
             const inputContainer = document.getElementById('modal-input-container');
             const input = document.getElementById('modal-input');
             
             if (inputPlaceholder !== undefined) {
                 inputContainer.classList.remove('hidden');
-                input.value = '';
+                // 如果有提供預設值就填入，否則清空
+                input.value = inputValue !== undefined ? inputValue : '';
                 input.placeholder = inputPlaceholder;
                 setTimeout(() => input.focus(), 100);
             } else {
@@ -141,415 +141,36 @@
             { id: 'chongyi', name: '野蠻人崇亦', gender: 'boy', role: 'Barbarian', desc: '體育課的王者，擁有驚人的體力。', abilityName: '蠻荒體魄', abilityDesc: '初始 HP 高達 130', stats: { hp: 130, xpBonus: 1.0, dmgReduction: 0, healOnHit: 0 }, avatar: '🏋️' },
             { id: 'peiyu', name: '麻法師姵妤', gender: 'girl', role: 'Mage', desc: '心思細膩，懂得如何在戰鬥中保護自己。', abilityName: '元素治癒', abilityDesc: '答對問題時回復 5 點 HP', stats: { hp: 100, xpBonus: 1.0, dmgReduction: 0, healOnHit: 5 }, avatar: '🧚‍♀️' },
             { id: 'yunqi', name: '女戰士妘萁', gender: 'girl', role: 'Warrior', desc: '亞馬遜的後裔，擅長防禦敵人的攻擊。', abilityName: '戰鬥格擋', abilityDesc: '答錯時受到的傷害減少 5 點', stats: { hp: 110, xpBonus: 1.0, dmgReduction: 5, healOnHit: 0 }, avatar: '🧝‍♀️' },
+            { id: 'youchen', name: '死靈法師佑辰', gender: 'boy', role: 'Necromancer', desc: '來自幽冥的召喚師，能從答題中汲取生命能量。', abilityName: '靈魂汲取', abilityDesc: '答對問題回復 10 點 HP', stats: { hp: 90, xpBonus: 1.0, dmgReduction: 0, healOnHit: 10 }, avatar: '💀' },
+            { id: 'bingjia', name: '一拳超人秉家', gender: 'boy', role: 'Hero', desc: '興趣是當英雄，每天都做100下伏地挺身。', abilityName: '認真答題', abilityDesc: '答對造成 25 點傷害 (一般為15)', stats: { hp: 100, xpBonus: 1.0, dmgReduction: 0, healOnHit: 0, dmgBonus: 10 }, avatar: '👊' },
             { id: 'book_immortal', name: '西寧書仙老頭', gender: 'elder', role: 'Guide', desc: '傳說中隱居在圖書館深處的老者，知曉所有奧祕。', abilityName: '萬卷天書', abilityDesc: '無法戰鬥與答題，但能查看所有關卡的重點攻略。', stats: { hp: 1, xpBonus: 0, dmgReduction: 0, healOnHit: 0 }, avatar: '👴' }
         ];
 
-        // --- GUIDE DATA (詳細攻略版) ---
+        // --- GUIDE DATA ---
         const GUIDE_DATA = {
-            'river': `
-                <div class="guide-content">
-                    <h3>🌊 河流的三部曲</h3>
-                    <p>流水改變地貌的力量主要有三種：<strong>侵蝕</strong>(破壞)、<strong>搬運</strong>(移動)、<strong>堆積</strong>(放下)。</p>
-                    
-                    <h3>1. 上游：年輕氣盛 (侵蝕力最強)</h3>
-                    <ul>
-                        <li><strong>特色</strong>：地勢陡峭、水流湍急。</li>
-                        <li><strong>石頭</strong>：充滿巨大的岩石，為了抵抗水流，形狀通常<span class="highlight">有稜有角</span>。</li>
-                        <li><strong>地形</strong>：河水用力向下切，形成深邃的<span class="highlight">V型谷</span>、峽谷(如太魯閣)、瀑布、壺穴。</li>
-                    </ul>
-
-                    <h3>2. 中游：漸趨平緩 (搬運為主)</h3>
-                    <ul>
-                        <li><strong>石頭</strong>：石頭在滾動中互相摩擦(磨蝕)，變得圓圓胖胖，稱為<span class="highlight">鵝卵石</span>。</li>
-                        <li><strong>曲流</strong>：河道彎曲處，水流力量不同。
-                            <ul class="mt-1 border-l-2 border-slate-500 pl-2">
-                                <li><strong>凹岸</strong>：水流沖刷，水深流急 → <span class="highlight">侵蝕作用</span> (危險！地基易被掏空)。</li>
-                                <li><strong>凸岸</strong>：水流緩慢，泥沙落下 → <span class="highlight">堆積作用</span> (安全，常有沙灘)。</li>
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <h3>3. 下游：步入老年 (堆積為主)</h3>
-                    <ul>
-                        <li><strong>特色</strong>：地勢平坦、流速緩慢，搬不動東西了。</li>
-                        <li><strong>地形</strong>：寬廣的<span class="highlight">沖積平原</span> (適合耕種居住)、出海口的<span class="highlight">三角洲</span>。</li>
-                        <li><strong>石頭</strong>：只剩下細小的<strong>泥沙</strong>。</li>
-                    </ul>
-                </div>`,
-            'coast': `
-                <div class="guide-content">
-                    <h3>🌊 海浪的雕刻刀：海蝕地形</h3>
-                    <p>海浪不斷拍打岩石，主要進行<span class="highlight">侵蝕作用</span>。</p>
-                    <ul>
-                        <li><strong>豆腐岩</strong>：海水沿著岩石的「節理」(裂縫) 切割，形成像豆腐方塊的地形 (基隆和平島)。</li>
-                        <li><strong>蕈狀岩</strong>：岩石上硬下軟，頸部被風沙和海水磨細了，像香菇 (野柳女王頭)。</li>
-                        <li><strong>演化三部曲</strong>：
-                            <br>1. 挖出洞 → <strong>海蝕洞</strong>
-                            <br>2. 打穿洞 → <strong>海蝕門 (海蝕拱門)</strong>
-                            <br>3. 頂部塌陷 → <strong>海蝕柱</strong>
-                        </li>
-                    </ul>
-
-                    <h3>🏖️ 海浪的搬運工：海積地形</h3>
-                    <p>海浪把沙子搬來堆積，主要進行<span class="highlight">堆積作用</span>。</p>
-                    <ul>
-                        <li><strong>沙洲</strong>：在海中堆積出的長條狀沙地 (如臺南鯤鯓)。</li>
-                        <li><strong>潟湖</strong>：被沙洲擋住，內側平靜的水域 (如七股潟湖，適合養蚵)。</li>
-                        <li><strong>陸連島</strong>：沙子把小島跟陸地連起來了 (如臺東金樽)。</li>
-                    </ul>
-                    <div class="note">💡 <strong>分辨關鍵</strong>：石頭變少變形是「侵蝕」；沙子變多是「堆積」。</div>
-                </div>`,
-            'rocks': `
-                <div class="guide-content">
-                    <h3>🪨 岩石三大家族</h3>
-                    <p>依據「形成過程」分類：</p>
-                    <ul>
-                        <li><strong>火成岩</strong> (岩漿冷卻)：
-                            <ul>
-                                <li><span class="highlight">安山岩</span>：質地堅硬，廟宇龍柱、石獅常用。</li>
-                                <li><span class="highlight">玄武岩</span>：黑黑的，常有氣孔 (澎湖柱狀玄武岩)。</li>
-                                <li><span class="highlight">花崗岩</span>：有黑白紅三色斑點，做地板常用。</li>
-                            </ul>
-                        </li>
-                        <li><strong>沉積岩</strong> (層層堆疊)：
-                            <ul>
-                                <li><span class="highlight">石灰岩</span>：古生物遺骸(珊瑚)堆積，滴<strong>稀鹽酸</strong>會冒泡 (產二氧化碳)，是水泥原料。</li>
-                                <li><strong>化石</strong>：最容易在沉積岩中發現！</li>
-                            </ul>
-                        </li>
-                        <li><strong>變質岩</strong> (高溫高壓)：
-                            <ul>
-                                <li><span class="highlight">大理岩</span>：由石灰岩變質而來，有花紋 (像大理石)。</li>
-                                <li><span class="highlight">板岩</span>：由頁岩變質而來，原住民蓋石板屋。</li>
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <h3>💎 礦物比硬度</h3>
-                    <p>硬度口訣：<span class="highlight">滑石方螢磷長石英黃剛金</span> (從小到大)</p>
-                    <ul>
-                        <li><strong>滑石</strong>：硬度1 (最軟)，滑滑的，做爽身粉。</li>
-                        <li><strong>指甲</strong>：硬度約 2.5。</li>
-                        <li><strong>方解石</strong>：硬度3，遇酸冒泡 (石灰岩成分)。</li>
-                        <li><strong>石英</strong>：硬度7，比玻璃硬，做玻璃、手錶。</li>
-                        <li><strong>金剛石</strong>：硬度10 (最硬)，就是鑽石。</li>
-                    </ul>
-                </div>`,
-            'disaster': `
-                <div class="guide-content">
-                    <h3>📉 地震數據看懂沒？</h3>
-                    <ul>
-                        <li><strong>芮氏規模 (Magnitude)</strong>：
-                            <ul>
-                                <li>代表地震釋放的<span class="highlight">能量大小</span>。</li>
-                                <li>全台灣<strong>只有一個數值</strong> (像燈泡瓦數)。</li>
-                                <li>有小數點 (如 6.8)，沒有單位。</li>
-                            </ul>
-                        </li>
-                        <li><strong>震度 (Intensity)</strong>：
-                            <ul>
-                                <li>代表你感覺到的<span class="highlight">搖晃程度</span>。</li>
-                                <li><strong>各地不同</strong> (離震央越近通常越大)。</li>
-                                <li>整數分級：0~7級 (共10級，5/6級分強弱)。</li>
-                            </ul>
-                        </li>
-                    </ul>
-
-                    <h3>⛑️ 保命關鍵</h3>
-                    <ul>
-                        <li><strong>口訣</strong>：<span class="highlight">趴下、掩護、穩住</span> (DCH)。</li>
-                        <li><strong>不可以</strong>：搭電梯、點火、驚慌亂跑。</li>
-                        <li><strong>緊急避難包</strong>：水、乾糧、手電筒、電池、哨子 (求救用)、證件、保暖衣物。</li>
-                        <li><strong>家庭防災卡</strong>：約定災害發生時的集合地點與聯絡方式。</li>
-                    </ul>
-                </div>`,
-            'magnet1': `
-                <div class="guide-content">
-                    <h3>🧭 磁鐵與地球</h3>
-                    <ul>
-                        <li><strong>磁極</strong>：磁力最強在兩端 (N極/S極)，中間最弱。</li>
-                        <li><strong>交互作用</strong>：<span class="highlight">同極相斥，異極相吸</span>。</li>
-                        <li><strong>折斷後</strong>：每一小段仍有 N、S 兩極 (磁極不會消失)。</li>
-                    </ul>
-                    
-                    <h3>🌍 地球是個大磁鐵</h3>
-                    <ul>
-                        <li><strong>指北針原理</strong>：指北針的箭頭是 N 極。因為「異極相吸」，它指向北方，表示<strong>地球的北方其實是地磁的 S 極</strong>。</li>
-                        <li><strong>口訣</strong>：地北是磁南，地南是磁北。</li>
-                    </ul>
-                </div>`,
-            'magnet2': `
-                <div class="guide-content">
-                    <h3>⚡ 電流磁效應</h3>
-                    <ul>
-                        <li><strong>奧斯特</strong>發現：通電的電線會讓旁邊的指北針偏轉 (電生磁)。</li>
-                        <li><strong>安培右手定則</strong> (簡易判斷)：
-                            <br>1. 電流方向改變 → 磁場方向改變 (指針偏轉相反)。
-                            <br>2. 電線位置改變 (在指北針上方 vs 下方) → 指針偏轉方向相反。
-                        </li>
-                    </ul>
-
-                    <h3>🔋 超級電磁鐵</h3>
-                    <p>如何讓電磁鐵磁力變強？</p>
-                    <ol>
-                        <li><strong>串聯電池</strong> (增加電壓/電流)。</li>
-                        <li><strong>增加線圈圈數</strong>。</li>
-                        <li>線圈內放入<span class="highlight">鐵棒</span> (磁化後磁力大增)。</li>
-                    </ol>
-                    <div class="note">⚠️ 電磁鐵只有通電時才有磁性，斷電磁性消失。</div>
-                </div>`,
-            'magnet3': `
-                <div class="guide-content">
-                    <h3>⚙️ 馬達 (電動機)</h3>
-                    <ul>
-                        <li><strong>原理</strong>：利用<span class="highlight">電磁鐵</span>與永久磁鐵間「同極相斥、異極相吸」產生推力讓軸心旋轉。</li>
-                        <li><strong>應用</strong>：凡是「會轉動」的電器通常都有馬達。
-                            <br>✅ 電風扇、洗衣機、吹風機、抽水馬達。
-                            <br>❌ 電鍋、烤箱、電燈 (這些是生熱或發光)。
-                        </li>
-                    </ul>
-
-                    <h3>🚄 磁浮列車</h3>
-                    <ul>
-                        <li><strong>原理</strong>：利用磁力讓車體<span class="highlight">懸浮</span>在軌道上。</li>
-                        <li><strong>優點</strong>：沒有接觸摩擦力 → 速度快、噪音小、震動小。</li>
-                    </ul>
-                </div>`,
-            'solution1': `
-                <div class="guide-content">
-                    <h3>💧 溶解的奧祕</h3>
-                    <ul>
-                        <li><strong>溶解</strong>：溶質(鹽)均勻散布在溶劑(水)中，看不見顆粒。</li>
-                        <li><strong>重量守恆</strong>：溶解後，鹽巴沒有消失！<span class="highlight">鹽水重 = 水重 + 鹽重</span>。</li>
-                    </ul>
-
-                    <h3>🔥 誰溶得快？誰溶得多？</h3>
-                    <ul>
-                        <li><strong>加速溶解</strong> (溶得快)：攪拌、加熱、磨碎 (變粉末)。</li>
-                        <li><strong>增加溶解量</strong> (溶得多)：通常<strong>提高溫度</strong>可以溶更多 (如砂糖)。</li>
-                        <li><strong>飽和</strong>：水吃飽了！再也溶不進去，會有沉澱。</li>
-                    </ul>
-                </div>`,
-            'solution2': `
-                <div class="guide-content">
-                    <h3>🧪 酸鹼變色龍</h3>
-                    <p>超級口訣：<span class="highlight">酸紅鹼藍</span> (石蕊試紙)</p>
-                    <ul>
-                        <li><strong>酸性</strong>：紅石蕊不變，藍石蕊變<span class="highlight">紅</span>。
-                            <br>Ex: 檸檬汁、醋、汽水、胃酸。
-                        </li>
-                        <li><strong>鹼性</strong>：藍石蕊不變，紅石蕊變<span class="highlight">藍</span>。
-                            <br>Ex: 小蘇打水、石灰水、氨水、肥皂水 (摸起來滑滑的)。
-                        </li>
-                        <li><strong>中性</strong>：試紙都不變色。
-                            <br>Ex: 食鹽水、純糖水。
-                        </li>
-                    </ul>
-                    <div class="note">💡 廣用試紙：紅橙黃(酸) ↔ 綠(中) ↔ 藍靛紫(鹼)</div>
-                </div>`,
-            'solution3': `
-                <div class="guide-content">
-                    <h3>⚡ 誰會導電？</h3>
-                    <p>能導電的水溶液稱為<span class="highlight">電解質</span>。</p>
-                    <ul>
-                        <li><strong>會導電</strong>：酸、鹼、鹽類水溶液。
-                            <br>(檸檬汁、小蘇打水、食鹽水、醋)
-                        </li>
-                        <li><strong>不會導電</strong>：糖水、酒精、純水。</li>
-                    </ul>
-                    
-                    <h3>⚗️ 酸鹼中和</h3>
-                    <ul>
-                        <li>酸 + 鹼 → <span class="highlight">鹽 + 水 + 熱</span> (會變熱！)。</li>
-                        <li>應用：胃酸過多吃胃藥(弱鹼)、被螞蟻咬(酸)塗氨水(鹼)。</li>
-                    </ul>
-                </div>`,
-            'force1': `
-                <div class="guide-content">
-                    <h3>💪 力是什麼？</h3>
-                    <p>力看不見，但可以看到它的<strong>效應</strong>：</p>
-                    <ol>
-                        <li><strong>形狀改變</strong>：捏黏土、壓彈簧。</li>
-                        <li><strong>運動狀態改變</strong>：讓靜止物體移動、變快、變慢、轉彎。</li>
-                    </ol>
-
-                    <h3>👻 接觸力 vs 超距力</h3>
-                    <ul>
-                        <li><strong>接觸力</strong>：一定要碰到才有力。
-                            <br>Ex: 推力、摩擦力、浮力、風力。
-                        </li>
-                        <li><strong>超距力</strong>：不用碰到就能作用。
-                            <br>Ex: <span class="highlight">地心引力</span>(重力)、磁力、靜電力。
-                        </li>
-                    </ul>
-                </div>`,
-            'force2': `
-                <div class="guide-content">
-                    <h3>⚖️ 測量力的大小</h3>
-                    <ul>
-                        <li><strong>工具</strong>：彈簧秤。</li>
-                        <li><strong>單位</strong>：<span class="highlight">公克重 (gw)</span> 或 牛頓 (N)。</li>
-                        <li><strong>虎克定律</strong>：在彈性限度內，<span class="highlight">彈簧伸長量與受力成正比</span>。
-                            <br>(掛越重，伸長越長。掛2倍重，伸長2倍)
-                        </li>
-                        <li><strong>歸零</strong>：測量前要先歸零，且要在受力方向上歸零。</li>
-                    </ul>
-                </div>`,
-            'force3': `
-                <div class="guide-content">
-                    <h3>🚫 摩擦力</h3>
-                    <ul>
-                        <li><strong>方向</strong>：永遠跟物體運動方向<span class="highlight">相反</span> (阻礙運動)。</li>
-                        <li><strong>影響因素</strong> (只跟這兩點有關)：
-                            <br>1. <strong>接觸面材質</strong>：越粗糙，摩擦力越大。
-                            <br>2. <strong>垂直正向力(重量)</strong>：壓得越重，摩擦力越大。
-                        </li>
-                        <li><strong>無關</strong>：跟接觸面積大小無關！</li>
-                    </ul>
-                    <div class="note">💡 拔河時鞋底要粗糙(增摩擦)；溜滑梯要光滑(減摩擦)。</div>
-                </div>`,
-            'economy1': `
-                <div class="guide-content">
-                    <h3>🌾 農業轉工業 (民國40-50年代)</h3>
-                    <ul>
-                        <li><strong>土地改革</strong> (順序必考)：
-                            <br>1. <strong>三七五減租</strong> (減輕佃農負擔)
-                            <br>2. <strong>公地放領</strong> (政府賣地給農民)
-                            <br>3. <strong>耕者有其田</strong> (地主多餘的地賣給農民)
-                        </li>
-                        <li><strong>進口替代</strong>：自己做不再買國外的 (輕工業：紡織、食品)。</li>
-                        <li><strong>出口導向</strong>：設立<span class="highlight">加工出口區</span> (高雄、楠梓、臺中)，引進外資，利用廉價勞力賺外匯。</li>
-                    </ul>
-                </div>`,
-            'economy2': `
-                <div class="guide-content">
-                    <h3>🏗️ 經濟起飛與轉型 (民國60年代後)</h3>
-                    <ul>
-                        <li><strong>十大建設</strong>：蔣經國推動。
-                            <br>1. <strong>交通</strong>：中山高、鐵路電氣化、中正機場。
-                            <br>2. <strong>重工業</strong>：中鋼、中船、石化工業。
-                        </li>
-                        <li><strong>高科技產業</strong>：設立<span class="highlight">新竹科學園區</span> (台灣矽谷)。</li>
-                        <li><strong>產業升級</strong>：從勞力密集(代工) → 技術/資本密集(研發、自創品牌)。</li>
-                    </ul>
-                </div>`,
-            'society1': `
-                <div class="guide-content">
-                    <h3>🚄 一日生活圈</h3>
-                    <ul>
-                        <li><strong>定義</strong>：交通革新縮短了「時間距離」。</li>
-                        <li><strong>功臣</strong>：<span class="highlight">高速鐵路 (HSR)</span>、捷運、高速公路。</li>
-                        <li><strong>生活圈</strong>：滿足就業、就學、購物、醫療的活動範圍。</li>
-                    </ul>
-                </div>`,
-            'society2': `
-                <div class="guide-content">
-                    <h3>🏙️ 都市化現象</h3>
-                    <ul>
-                        <li><strong>定義</strong>：人口不斷向都市集中。</li>
-                        <li><strong>推拉理論</strong>：
-                            <br>📥 <strong>拉力</strong> (都市)：就業機會多、交通便利、醫療好。
-                            <br>📤 <strong>推力</strong> (鄉村)：就業少、收入低。
-                        </li>
-                        <li><strong>問題</strong>：
-                            <br>都市：房價高、塞車、噪音、熱島效應。
-                            <br>鄉村：人口老化、勞動力不足、隔代教養。</li>
-                    </ul>
-                </div>`,
-            'society3': `
-                <div class="guide-content">
-                    <h3>📉 人口與永續</h3>
-                    <ul>
-                        <li><strong>少子化</strong>：生得少。原因：養育成本高、晚婚。</li>
-                        <li><strong>高齡化</strong>：老得多。醫療進步壽命長。
-                            <br>→ 進入「高齡社會」，需長照、無障礙設施。
-                        </li>
-                        <li><strong>地方創生</strong>：鼓勵青年回鄉創業，結合在地特色發展經濟，解決城鄉差距。</li>
-                    </ul>
-                </div>`,
-            'history1': `
-                <div class="guide-content">
-                    <h3>🗿 史前時代 (沒有文字)</h3>
-                    <ul>
-                        <li><strong>舊石器</strong> (<span class="highlight">長濱文化</span>)：
-                            <br>打製石器、已知用火、採集漁獵、住洞穴。
-                        </li>
-                        <li><strong>新石器</strong> (大坌坑、圓山、<span class="highlight">卑南</span>)：
-                            <br>磨製石器、燒製陶器、<strong>開始農耕</strong>、定居、石板棺、玉器。
-                        </li>
-                        <li><strong>金屬器</strong> (<span class="highlight">十三行文化</span>)：
-                            <br>煉鐵、瑪瑙珠/玻璃珠 (代表有對外貿易)。
-                        </li>
-                    </ul>
-                </div>`,
-            'history2': `
-                <div class="guide-content">
-                    <h3>🏹 原住民族</h3>
-                    <ul>
-                        <li><strong>高山族</strong> (16族)：
-                            <br>★ <strong>阿美族</strong>：豐年祭、母系社會。
-                            <br>★ <strong>賽夏族</strong>：矮靈祭 (巴斯達隘)。
-                            <br>★ <strong>布農族</strong>：八部合音、打耳祭。
-                            <br>★ <strong>泰雅族</strong>：紋面、祖靈祭。
-                            <br>★ <strong>達悟族</strong>：飛魚祭、拼板舟 (蘭嶼)。
-                            <br>★ <strong>排灣/魯凱</strong>：百步蛇、石板屋、貴族制度。
-                        </li>
-                        <li><strong>平埔族</strong>：漢化較早，多居住在平原 (如西拉雅族)。</li>
-                    </ul>
-                </div>`,
-            'history3': `
-                <div class="guide-content">
-                    <h3>🚢 國際競爭時期 (荷西)</h3>
-                    <ul>
-                        <li><strong>荷蘭 (南部)</strong>：
-                            <br>據點：大員 (台南)。熱蘭遮城(行政)、普羅民遮城。
-                            <br>經濟：出口<span class="highlight">鹿皮、蔗糖</span>。引進<strong>黃牛</strong>。
-                            <br>文化：<strong>新港文書</strong> (用羅馬拼音拼原住民語，為了傳教與契約)。
-                            <br>事件：郭懷一抗荷事件。
-                        </li>
-                        <li><strong>西班牙 (北部)</strong>：
-                            <br>據點：基隆(聖薩爾瓦多城)、淡水(紅毛城)。
-                            <br>結局：被荷蘭人趕走。
-                        </li>
-                    </ul>
-                </div>`,
-            'history4': `
-                <div class="guide-content">
-                    <h3>👑 明鄭時期 (鄭氏)</h3>
-                    <ul>
-                        <li><strong>鄭成功</strong>：
-                            <br>目的：反清復明。趕走荷蘭人。
-                            <br>尊稱：國姓爺、延平郡王。
-                        </li>
-                        <li><strong>陳永華</strong> (鄭經的諸葛亮)：
-                            <br>建設：建議蓋<strong>孔廟</strong> (全臺首學，在台南)，推廣儒學。
-                        </li>
-                        <li><strong>軍隊屯田</strong>：
-                            <br>寓兵於農，解決糧食問題。地名：左營、新營、柳營。
-                        </li>
-                        <li><strong>結局</strong>：施琅攻台，鄭克塽投降清朝。</li>
-                    </ul>
-                </div>`,
-            'history5': `
-                <div class="guide-content">
-                    <h3>🏮 清領初期</h3>
-                    <ul>
-                        <li><strong>渡台禁令</strong>：
-                            <br>1. 需申請許可證。
-                            <br>2. <span class="highlight">禁止攜帶家眷</span> (導致男女失衡，多<strong>羅漢腳</strong>)。
-                            <br>3. 廣東人禁止來台 (後來開放)。
-                        </li>
-                        <li><strong>社會</strong>：
-                            <br>械鬥 (閩粵械鬥、漳泉械鬥)。
-                            <br>民變 (朱一貴、林爽文)。
-                        </li>
-                        <li><strong>水利建設</strong> (必考)：
-                            <br>★ <strong>瑠公圳</strong> (郭錫瑠)：灌溉台北盆地。
-                            <br>★ <strong>八堡圳</strong> (施世榜)：灌溉彰化平原 (全台最大)。
-                            <br>★ <strong>曹公圳</strong> (曹謹)：灌溉高雄平原。
-                        </li>
-                    </ul>
-                </div>`
+            'river': `<div class="guide-content"><h3>1. 上游：陡峭與侵蝕</h3><p>河流上游就像溜滑梯的頂端，地勢很陡，水流<strong>非常急</strong>。</p><ul><li><strong>作用力</strong>：水流太快了，把石頭沖刷下來（<span class="highlight">侵蝕作用</span>）並搬運走（<span class="highlight">搬運作用</span>）。</li><li><strong>地形</strong>：V型谷、峽谷（太魯閣）、瀑布、壺穴。</li></ul><h3>2. 中游：變寬與搬運</h3><p>水流到了中間，速度稍微慢一點點，但還是能搬東西。</p><ul><li><strong>石頭</strong>：石頭在滾動過程中互相碰撞，尖角被磨掉了，變成圓圓胖胖的<span class="highlight">鵝卵石</span>。</li><li><strong>曲流</strong>：河道彎彎曲曲的。<ul><li><strong>凹岸</strong>：水流沖向這邊，水快、水深，發生<span class="highlight">侵蝕作用</span>（地基會被掏空，危險！）。</li><li><strong>凸岸</strong>：水流流過這邊變慢，發生<span class="highlight">堆積作用</span>（變成沙灘，適合玩水）。</li></ul></li></ul><h3>3. 下游：平坦與堆積</h3><p>快到大海了，地勢變平，水流<strong>變慢</strong>，搬不動東西了。</p><ul><li><strong>作用力</strong>：泥沙通通放下來，叫做<span class="highlight">堆積作用</span>。</li><li><strong>地形</strong>：形成寬廣的<strong>沖積平原</strong>（我們住的地方）。在出海口會堆成<span class="highlight">三角洲</span>。</li><li><strong>石頭</strong>：剩下細細的<strong>泥沙</strong>。</li></ul></div>`,
+            'coast': `<div class="guide-content"><h3>1. 海浪的雕刻師：海蝕地形</h3><p>海浪不斷拍打岩石，把石頭「磨掉」或「打穿」，這就是<span class="highlight">侵蝕作用</span>。</p><ul><li><strong>豆腐岩</strong>：岩石有節理（裂縫），海水沿著裂縫切下去，切成一塊塊像豆腐（基隆和平島）。</li><li><strong>蕈狀岩</strong>：例如<span class="highlight">女王頭</span>。上面石頭硬，下面石頭軟，下面的脖子被風和海水磨細了（差異侵蝕）。</li><li><strong>演變過程</strong>：海蝕洞（挖一個洞）→ <span class="highlight">海蝕門/拱門</span>（打穿了）→ <span class="highlight">海蝕柱</span>（頂部塌了剩柱子）。</li><li><strong>老梅綠石槽</strong>：是<span class="highlight">海蝕溝</span>，上面長滿了綠藻。</li></ul><h3>2. 海浪的搬運工：海積地形</h3><p>海浪把沙子搬來搬去，堆在岸邊，這就是<span class="highlight">堆積作用</span>。</p><ul><li><strong>沙灘</strong>：福隆海水浴場金黃色的沙灘。</li><li><strong>沙洲</strong>：堆積在海中間長長的一條沙子（像鯤鯓）。</li><li><strong>潟湖</strong>：被沙洲擋住，在內側平靜的水域（像七股潟湖，適合養蚵）。</li><li><strong>陸連島</strong>：沙子堆積把小島和陸地連起來了（台東金樽）。</li></ul></div>`,
+            'rocks': `<div class="guide-content"><h3>1. 岩石三大家族</h3><p>岩石依照「怎麼形成的」分成三大類：</p><ul><li><strong>火成岩</strong>（火氣很大）：岩漿冷卻變成的。<ul><li><span class="highlight">安山岩</span>：很硬，常拿來做廟宇的石獅、龍柱。</li><li><span class="highlight">玄武岩</span>：黑黑的，有氣孔（岩漿氣體跑掉），澎湖最多。</li><li><span class="highlight">花崗岩</span>：有黑、白、肉紅三種顏色顆粒（黑雲母、石英、長石），做地板常用。</li></ul></li><li><strong>沉積岩</strong>（層層堆疊）：泥沙一層層堆起來壓實的。<ul><li><span class="highlight">石灰岩</span>：以前是珊瑚礁，滴到<strong>稀鹽酸</strong>會冒泡泡（產生二氧化碳），是做水泥的原料。</li><li><strong>化石</strong>：最容易在沉積岩裡發現化石！</li></ul></li><li><strong>變質岩</strong>（壓力山大）：岩石被高溫高壓「烤」過變形了。<ul><li><span class="highlight">大理岩</span>：由石灰岩變來的，有美麗花紋。</li><li><span class="highlight">板岩</span>：由頁岩變來的，原住民拿來蓋石板屋。</li></ul></li></ul><h3>2. 礦物比一比</h3><ul><li><strong>硬度</strong>（誰最硬？）：<span class="highlight">滑石</span>（最軟） < 指甲 < <span class="highlight">方解石</span>（銅幣） < <span class="highlight">石英</span>（比玻璃硬） < <span class="highlight">金剛石</span>（鑽石，最硬）。</li><li><strong>特性</strong>：<ul><li><strong>硫磺</strong>：黃色，有臭雞蛋味，做火藥。</li><li><strong>石墨</strong>：黑色，會導電，做鉛筆芯。</li><li><strong>滑石</strong>：摸起來滑滑的，做爽身粉。</li></ul></li></ul></div>`,
+            'disaster': `<div class="guide-content"><h3>1. 地震的大小怎麼看？</h3><p>地震報告會看到兩個重要的數字，千萬別搞混！</p><ul><li><span class="highlight">芮氏規模</span>：代表地震釋放的<strong>能量大小</strong>。<ul><li>全台灣<strong>只有一個數值</strong>。</li><li>有小數點，沒有單位。</li></ul></li><li><span class="highlight">震度</span>：代表你感覺到的<strong>搖晃程度</strong>。<ul><li><strong>各地不同</strong>。</li><li>分級：0級（無感）~ 7級（劇烈），共10個等級。</li></ul></li></ul><h3>2. 地震來了怎麼辦？</h3><ul><li><strong>保命三步驟</strong>：<span class="highlight">趴下、掩護、穩住</span>。</li><li><strong>不可以</strong>：搭電梯、慌張亂跑、點火。</li><li><strong>緊急避難包</strong>：要放乾糧、水、手電筒、電池、哨子、證件、保暖衣物。</li></ul></div>`,
+            'magnet1': `<div class="guide-content"><h3>1. 磁鐵的個性</h3><ul><li><strong>磁極</strong>：磁力最強的地方在<strong>兩端</strong>（N極和S極）。</li><li><strong>相處之道</strong>：<span class="highlight">同極相斥</span>，<span class="highlight">異極相吸</span>。</li></ul><h3>2. 地球就是大磁鐵</h3><ul><li><strong>指北針原理</strong>：指北針的箭頭是N極。因為異極相吸，它會被地球的磁場吸引。</li><li><strong>重要觀念</strong>：地理的北極附近，其實是<span class="highlight">地磁的S極</span>；地理的南極附近，是<span class="highlight">地磁的N極</span>。</li></ul></div>`,
+            'magnet2': `<div class="guide-content"><h3>1. 電也能生磁</h3><ul><li><strong>奧斯特的發現</strong>：通電的電線旁邊，指北針會偏轉！</li><li><strong>安培右手定則</strong>（簡單版）：<ul><li>電線放在指北針<strong>上方</strong> vs <strong>下方</strong>，指針偏轉方向會<span class="highlight">相反</span>。</li><li>電流方向改變，指針偏轉方向也會<span class="highlight">相反</span>。</li></ul></li></ul><h3>2. 超級電磁鐵</h3><p>怎麼讓電磁鐵變強？</p><ul><li><strong>加強法 1</strong>：<span class="highlight">串聯電池</span>。</li><li><strong>加強法 2</strong>：<span class="highlight">增加線圈圈數</span>。</li><li><strong>加強法 3</strong>：線圈裡面放入<span class="highlight">鐵棒</span>。</li></ul></div>`,
+            'magnet3': `<div class="guide-content"><h3>1. 生活中的馬達</h3><ul><li><strong>原理</strong>：利用<span class="highlight">同極相斥、異極相吸</span>的原理，讓軸心轉動。</li><li><strong>應用</strong>：<span class="highlight">電風扇、洗衣機、吹風機</span>。</li></ul><h3>2. 磁浮列車</h3><ul><li><strong>原理</strong>：利用磁力讓車體<span class="highlight">懸浮</span>。</li><li><strong>優點</strong>：<span class="highlight">沒有摩擦力</span>，速度快、噪音小。</li></ul></div>`,
+            'solution1': `<div class="guide-content"><h3>1. 溶解</h3><ul><li>物質在水中消失，看不見顆粒，這就是<span class="highlight">溶解</span>。</li><li><strong>重量守恆</strong>：溶解後，重量不會變輕！</li></ul><h3>2. 加速溶解</h3><ul><li><strong>攪拌、加熱、磨碎</strong>。</li></ul><h3>3. 飽和與分離</h3><ul><li><strong>飽和</strong>：吃不下了！水再也溶不進去鹽巴。</li><li><strong>分離</strong>：利用<strong>蒸發</strong>（晒太陽、加熱）把水趕走，留下鹽結晶。</li></ul></div>`,
+            'solution2': `<div class="guide-content"><h3>1. 石蕊試紙</h3><p>口訣：<span class="highlight">酸紅鹼藍</span></p><ul><li><strong>酸性</strong>：變<span class="highlight">紅色</span>。</li><li><strong>鹼性</strong>：變<span class="highlight">藍色</span>。</li></ul><h3>2. 常見水溶液</h3><ul><li><strong>酸性</strong>：<span class="highlight">檸檬汁、白醋、汽水</span>。</li><li><strong>鹼性</strong>：<span class="highlight">小蘇打水、石灰水、氨水、肥皂水</span>。</li><li><strong>中性</strong>：<span class="highlight">食鹽水、糖水</span>。</li></ul></div>`,
+            'solution3': `<div class="guide-content"><h3>1. 導電性</h3><p>能導電的水溶液稱為<span class="highlight">電解質</span>。</p><ul><li><strong>容易導電</strong>：酸、鹼、鹽類（檸檬汁、食鹽水）。</li><li><strong>不易導電</strong>：糖水、酒精、純水。</li></ul><h3>2. 安全</h3><p><span class="highlight">手溼溼的絕對不能碰電器開關</span>。</p></div>`,
+            'force1': `<div class="guide-content"><h3>1. 力是什麼？</h3><p>力可以造成：移動、改變方向、變形、改變快慢。</p><h3>2. 接觸力 vs 超距力</h3><ul><li><strong>接觸力</strong>：推力、摩擦力、浮力、風力。</li><li><strong>超距力</strong>：<span class="highlight">地心引力、磁力、靜電力</span>。</li></ul></div>`,
+            'force2': `<div class="guide-content"><h3>1. 彈簧秤</h3><ul><li><strong>虎克定律</strong>：<span class="highlight">掛越重，彈簧伸長越長</span>（成正比）。</li><li><strong>單位</strong>：<span class="highlight">公克重 (gw)</span>。</li></ul><h3>2. 測量</h3><ul><li>使用前要先<span class="highlight">歸零</span>。</li></ul></div>`,
+            'force3': `<div class="guide-content"><h3>1. 摩擦力</h3><ul><li><strong>方向</strong>：跟物體運動方向<span class="highlight">相反</span>。</li></ul><h3>2. 影響因素</h3><ul><li><strong>接觸面</strong>：越<span class="highlight">粗糙</span>，摩擦力越大。</li><li><strong>重量</strong>：物體<span class="highlight">越重</span>，摩擦力越大。</li><li>跟接觸面積大小<strong>無關</strong>！</li></ul></div>`,
+            'economy1': `<div class="guide-content"><h3>1. 土地改革</h3><p>三七五減租 → 公地放領 → 耕者有其田。</p><h3>2. 工業起飛</h3><ul><li><strong>輕工業</strong>：紡織、食品。</li><li><strong>加工出口區</strong>：<span class="highlight">高雄、楠梓、臺中</span>。吸引外資，增加就業。</li></ul></div>`,
+            'economy2': `<div class="guide-content"><h3>1. 十大建設</h3><p>發展重工業（鋼鐵、造船）。交通建設：高速公路、鐵路電氣化。</p><h3>2. 科技島嶼</h3><ul><li><strong>科學園區</strong>：<span class="highlight">新竹</span>(竹科)。</li><li><strong>產業升級</strong>：從代工(OEM)轉向研發。</li></ul></div>`,
+            'society1': `<div class="guide-content"><h3>1. 生活圈</h3><p>滿足就業、就學、購物需求的範圍。</p><h3>2. 一日生活圈</h3><p>因為<span class="highlight">高鐵、捷運</span>通車，交通變快了。</p></div>`,
+            'society2': `<div class="guide-content"><h3>1. 都市化</h3><p>人口往都市集中。產生房價高、塞車、汙染等問題。</p><h3>2. 遷移原因</h3><ul><li><strong>拉力</strong>（都市好）：工作多、便利。</li><li><strong>推力</strong>（鄉村差）：工作少。</li></ul></div>`,
+            'society3': `<div class="guide-content"><h3>1. 人口問題</h3><p>少子化、高齡化。</p><h3>2. 永續發展</h3><p><span class="highlight">地方創生</span>（救鄉村）、綠建築。</p></div>`,
+            'history1': `<div class="guide-content"><h3>1. 舊石器 (長濱)</h3><p>打製石器、用火。</p><h3>2. 新石器 (大坌坑/卑南)</h3><p>磨製石器、陶器、定居農耕、石板棺。</p><h3>3. 金屬器 (十三行)</h3><p>煉鐵、交易(玻璃珠)。</p></div>`,
+            'history2': `<div class="guide-content"><h3>1. 原住民族</h3><ul><li><strong>平埔</strong>：漢化較早。</li><li><strong>高山</strong>：16族。</li></ul><h3>2. 文化</h3><p>阿美豐年祭、賽夏矮靈祭、百步蛇傳說(排灣/魯凱)。</p></div>`,
+            'history3': `<div class="guide-content"><h3>1. 荷蘭 (南台灣)</h3><p>熱蘭遮城(安平古堡)、貿易、新港文書(傳教)、黃牛。</p><h3>2. 西班牙 (北台灣)</h3><p>聖薩爾瓦多城(基隆)、紅毛城(淡水)。</p></div>`,
+            'history4': `<div class="guide-content"><h3>1. 鄭成功</h3><p>反清復明、趕走荷蘭人。</p><h3>2. 建設</h3><p>陳永華建<strong>孔廟</strong>(全臺首學)。軍隊<strong>屯田</strong>(左營、新營)。</p></div>`,
+            'history5': `<div class="guide-content"><h3>1. 清領初期</h3><p>施琅攻台。<strong>渡台禁令</strong>(禁攜眷)導致<strong>羅漢腳</strong>(單身男)多。</p><h3>2. 水利</h3><p>瑠公圳(台北)、八堡圳(彰化)、曹公圳(高雄)。</p></div>`
         };
 
         // --- GAME DATA (擴充題庫架構) ---
@@ -620,7 +241,7 @@
         // --- STATE ---
         let gameState = 'START'; 
         let currentWorldIndex = 0;
-        let player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+        let player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
         let currentZone = null, currentEnemy = null, currentQuestion = null;
         let battleLog = [], enemyIndex = 0, showZoneInfo = null, questionCountInBattle = 0;
         let showCheerMessage = false;
@@ -629,8 +250,11 @@
         let activeLeaderboardTab = 0;
         let showGameIntro = false;
         let cheatCodeBuffer = "";
-        let isQuestionsLoaded = false; // 新增：追蹤題庫是否載入
-        let showDebugButton = false; // 新增：控制除錯按鈕顯示
+        let isQuestionsLoaded = false; 
+        let showDebugButton = false; 
+        
+        // 新增：戰鬥統計
+        let battleStats = { startTime: 0, correct: 0, attempts: 0, score: 0 };
 
         // --- HELPERS ---
         function addLog(text) { battleLog.push(text); if (battleLog.length > 4) battleLog.shift(); renderApp(); }
@@ -662,7 +286,6 @@
         }
         
         // --- FETCH EXTENDED QUESTIONS ---
-        // 新增一個診斷函數
         async function diagnoseConnection() {
             if (!GAS_API_URL) {
                 showModal({title: "設定錯誤", message: "請先在程式碼中設定 GAS_API_URL！", showCancel: false});
@@ -673,7 +296,7 @@
             try {
                 const start = Date.now();
                 const res = await fetch(GAS_API_URL + "?op=questions&t=" + start);
-                const text = await res.text(); // 先讀成文字，檢查是否為 HTML 錯誤頁面
+                const text = await res.text(); 
                 
                 let data;
                 try {
@@ -686,7 +309,6 @@
                     throw new Error("GAS 內部錯誤: " + data.message);
                 }
 
-                // 統計題目
                 let stats = "";
                 let total = 0;
                 Object.keys(data).forEach(zoneId => {
@@ -706,7 +328,6 @@
                         message: `成功讀取到 ${total} 題！\n\n詳細分佈：\n${stats}\n\n如果不見題目，請重新整理網頁。`,
                         showCancel: false
                     });
-                    // 重新載入題目
                     processQuestionData(data);
                 }
 
@@ -725,7 +346,6 @@
                 w.zones.forEach(z => {
                     if (data[z.id] && Array.isArray(data[z.id])) {
                         const enemy = z.enemies[0];
-                        // 清空舊題目避免重複
                         enemy.questions = [];
                         enemy.questions.push(...data[z.id]);
                         count += data[z.id].length;
@@ -733,7 +353,6 @@
                 });
             });
             
-            // Re-populate Boss Questions
             GAME_DATA.worlds.forEach(world => {
                 const bossZone = world.zones.find(z => z.id.startsWith('boss'));
                 if (bossZone) {
@@ -766,12 +385,10 @@
             }
         }
         
-        // Call immediately on load
         fetchExtendedQuestions();
 
         // --- CHEAT CODE LOGIC ---
         document.addEventListener('keydown', (e) => {
-            
             if (e.key.length === 1) {
                 cheatCodeBuffer += e.key;
                 if (cheatCodeBuffer.length > 30) {
@@ -783,13 +400,11 @@
             const targetDebug = "hk4g4xu06vu04";
             const bufferNormalized = cheatCodeBuffer.replace(/\s/g, '');
             
-            // 既有地圖密技
             if (gameState === 'MAP' && bufferNormalized.includes(targetMap)) {
                 activateCheat();
                 cheatCodeBuffer = ""; 
             }
 
-            // 新增：顯示除錯按鈕密技 (僅限主畫面)
             if (gameState === 'START' && bufferNormalized.includes(targetDebug)) {
                 showDebugButton = true;
                 showToast("除錯模式已啟用");
@@ -841,8 +456,6 @@
 
         function uploadCheatScore() {
             if (!GAS_API_URL) return;
-            
-            // 如果玩家尚未設定名稱，跳出視窗詢問
             let defaultName = player.name;
             if (!defaultName || defaultName === CHARACTERS.find(c => c.id === player.characterId).name) {
                  defaultName = "神祕高手";
@@ -877,7 +490,6 @@
             });
         }
 
-
         // --- API ACTIONS ---
         function uploadScore() {
             if (!GAS_API_URL) {
@@ -885,10 +497,15 @@
                 return;
             }
             
+            const currentPlayerName = player.name;
+            const defaultCharName = CHARACTERS.find(c => c.id === player.characterId).name;
+            const inputValue = (currentPlayerName && currentPlayerName !== defaultCharName) ? currentPlayerName : '';
+
             showModal({
                 title: '上傳戰績',
                 message: '請輸入您的名字以便登錄英雄榜：',
-                inputPlaceholder: '未名探險家',
+                inputPlaceholder: '請輸入名字 (如: 601 王小明)',
+                inputValue: inputValue,
                 onConfirm: (userName) => {
                     if (!userName) return;
                     player.name = userName;
@@ -898,7 +515,7 @@
                         role: CHARACTERS.find(c => c.id === player.characterId).name,
                         world: GAME_DATA.worlds[currentWorldIndex].title,
                         level: player.level,
-                        score: player.solvedQuestionIds.length
+                        score: battleStats.score // 改為上傳本次戰鬥的計算積分
                     };
 
                     addLog("正在上傳戰績...");
@@ -914,6 +531,10 @@
                     .then(() => {
                         addLog("戰績上傳成功！");
                         showToast("戰績上傳成功！");
+                        if (!player.uploadedZones.includes(currentZone.id)) {
+                            player.uploadedZones.push(currentZone.id);
+                        }
+                        renderApp();
                     })
                     .catch(error => {
                         console.error("Error:", error);
@@ -926,7 +547,6 @@
 
         function fetchLeaderboard() {
             if (!GAS_API_URL) {
-                // Mock data if no URL
                 leaderboardData = [
                     { name: "測試玩家1", role: "魔法師科貴", world: "第一世界", level: 5, score: 20 },
                     { name: "測試玩家2", role: "女戰士妘萁", world: "第一世界", level: 3, score: 15 }
@@ -977,7 +597,7 @@
         
         function returnToMainMenu() { 
             gameState = 'START';
-            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
             battleLog = [];
             currentWorldIndex = 0;
             renderApp();
@@ -985,7 +605,7 @@
 
         function forgetClothes() {
             gameState = 'START';
-            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
             battleLog = [];
             currentWorldIndex = 0;
             showCheerMessage = true;
@@ -998,8 +618,7 @@
 
         function selectCharacter(charId) {
             const char = CHARACTERS.find(c => c.id === charId);
-            // Default player name is character name until they upload score
-            player = { name: char.name, role: char.role, hp: char.stats.hp, maxHp: char.stats.hp, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: char.id, stats: char.stats, solvedQuestionIds: [] };
+            player = { name: char.name, role: char.role, hp: char.stats.hp, maxHp: char.stats.hp, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: char.id, stats: char.stats, solvedQuestionIds: [] };
             gameState = 'MAP';
             battleLog = char.id === 'book_immortal' ? ['歡迎書仙！', '攻略模式開啟。'] : [`歡迎 ${char.name}！`, `能力：${char.abilityName}`];
             if(char.id === 'book_immortal') {
@@ -1009,7 +628,6 @@
         }
 
         function enterZone(zoneId) {
-            // 防呆：如果題目還沒載入，提示用戶
             const world = GAME_DATA.worlds[currentWorldIndex];
             const zone = world.zones.find(z => z.id === zoneId);
             
@@ -1032,6 +650,9 @@
         }
 
         function startBattle(enemy) {
+            // 初始化戰鬥統計
+            battleStats = { startTime: Date.now(), correct: 0, attempts: 0, score: 0 };
+
             const allQuestions = enemy.questions;
             
             let pool = [];
@@ -1072,16 +693,21 @@
             if (!currentQuestion) return;
             const isCorrect = idx === currentQuestion.correctIndex;
             
+            // 更新戰鬥統計
+            battleStats.attempts++;
+
             if (isCorrect) {
-                currentEnemy.currentHp -= 15;
-                addLog('✅ 正確！傷害 15！');
+                battleStats.correct++;
+                
+                const baseDmg = 15 + (player.stats.dmgBonus || 0);
+                currentEnemy.currentHp -= baseDmg;
+                addLog(`✅ 正確！傷害 ${baseDmg}！`);
                 if(!player.solvedQuestionIds.includes(currentQuestion.id)) player.solvedQuestionIds.push(currentQuestion.id);
                 if (player.stats.healOnHit > 0) player.hp = Math.min(player.maxHp, player.hp + player.stats.healOnHit);
                 const xpGain = Math.floor(15 * player.stats.xpBonus);
                 player.xp += xpGain;
                 if (player.xp >= player.maxXp) { player.xp -= player.maxXp; player.level++; player.maxXp = Math.floor(player.maxXp*1.5); player.hp = player.maxHp; addLog('🎉 升級！'); }
                 
-                // Check if battle logic needs next question
                 currentEnemy.battleIndex++;
                 if (currentEnemy.currentHp <= 0 || currentEnemy.battleIndex >= currentEnemy.battleQuestions.length) {
                     handleEnemyDefeat(currentEnemy);
@@ -1100,8 +726,21 @@
         }
 
         function handleEnemyDefeat(enemy) {
+            // 計算積分
+            const endTime = Date.now();
+            const durationSec = Math.floor((endTime - battleStats.startTime) / 1000);
+            const accuracy = battleStats.attempts > 0 ? (battleStats.correct / battleStats.attempts) : 0;
+            const timeBonus = Math.max(0, (300 - durationSec) * 10); // 300秒內，每快1秒+10分
+            const baseScore = battleStats.correct * 1000;
+            
+            // 核心公式： (答對數 * 1000) * (準確率^2) + 時間紅利
+            const finalScore = Math.floor(baseScore * Math.pow(accuracy, 2) + timeBonus);
+            
+            battleStats.score = finalScore;
+            battleStats.duration = durationSec;
+            battleStats.accuracy = (accuracy * 100).toFixed(1);
+
             addLog(`🏆 擊敗 ${enemy.name}！`);
-            const world = GAME_DATA.worlds[currentWorldIndex];
             if (!player.completedZones.includes(currentZone.id)) player.completedZones.push(currentZone.id);
             gameState = 'VICTORY';
             renderApp();
@@ -1157,7 +796,6 @@
             else if (gameState === 'GAMEOVER') content += renderGameOver();
             else if (gameState === 'GUIDE') content += renderGuide();
 
-            // Game Intro Modal
             if (showGameIntro) {
                 content += `
                 <div class="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fade-in">
@@ -1182,10 +820,23 @@
                                 <li><strong>崇亦</strong>：血量高，耐打。</li>
                                 <li><strong>姵妤</strong>：答對回血，續航力強。</li>
                                 <li><strong>妘萁</strong>：答錯減傷，容錯率高。</li>
+                                <li><strong>佑辰</strong>：答對大幅回血，生存專家。</li>
+                                <li><strong>秉家</strong>：攻擊力超高，一擊必殺。</li>
                                 <li><strong>書仙老頭</strong>：無法戰鬥，專門用來查看「攻略筆記」。</li>
                             </ul>
                             <h3 class="text-lg font-bold text-white">玩法說明</h3>
                             <p>選擇關卡進行答題戰鬥，答對扣敵血，答錯扣己血。每個世界最後都有一個擁有 500 血量的「魔王關」，考驗你的綜合實力！</p>
+                            
+                            <!-- 新增部分 -->
+                            <h3 class="text-lg font-bold text-white">🏆 戰績積分規則</h3>
+                            <div class="bg-slate-800 p-3 rounded-lg border border-slate-600 text-sm">
+                                <p class="mb-2 text-amber-300 font-bold">總分 = (答對題數 × 1000) × (答對率)² + 時間加成</p>
+                                <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                                    <li><strong>極度重視答對率</strong>：因為是平方計算，錯一題分數會扣非常多！(例：答對率 80%，分數只剩 64%)</li>
+                                    <li><strong>時間加成</strong>：基準 300 秒，每提早 1 秒 + 10 分。</li>
+                                    <li><strong>策略建議</strong>：寧可慢一點想清楚，也不要亂猜喔！</li>
+                                </ul>
+                            </div>
                         </div>
                         <div class="p-4 border-t border-slate-700">
                             <button onclick="toggleGameIntro()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold">我準備好了！</button>
@@ -1194,7 +845,6 @@
                 </div>`;
             }
 
-            // Leaderboard Modal
             if (showLeaderboard) {
                 const currentWorldTitle = GAME_DATA.worlds[activeLeaderboardTab].title;
                 const filteredData = leaderboardData.filter(d => d.world && d.world.includes(GAME_DATA.worlds[activeLeaderboardTab].title.split('：')[1].split(' (')[0])); 
@@ -1243,7 +893,6 @@
 
             content += `</main>`;
             
-            // 診斷按鈕 (只有開啟 showDebugButton 才會顯示)
             if (showDebugButton) {
                 content += `<button onclick="diagnoseConnection()" class="fixed bottom-4 right-4 p-2 bg-slate-800/80 hover:bg-slate-700 text-slate-400 text-xs rounded-full border border-slate-600 flex items-center gap-1 z-50">
                     <i data-lucide="wrench" class="w-3 h-3"></i> 測試連線
@@ -1404,13 +1053,36 @@
         }
 
         function renderVictory() {
+            // 判斷是否已經上傳過戰績
+            const isUploaded = player.uploadedZones.includes(currentZone.id);
+            const uploadBtn = isUploaded 
+                ? `<button disabled class="px-8 py-3 bg-slate-700 text-slate-500 rounded-lg font-bold shadow-lg cursor-not-allowed">已上傳</button>`
+                : `<button onclick="uploadScore()" class="px-8 py-3 bg-amber-600 text-white rounded-lg font-bold shadow-lg animate-pulse">上傳戰績</button>`;
+
             return `<div class="flex flex-col items-center justify-center h-full p-6 text-center animate-fade-in">
                 <div class="text-6xl mb-4 animate-bounce-custom">🏆</div>
                 <h1 class="text-3xl font-bold text-green-400 mb-2">攻略成功！</h1>
-                <p class="text-slate-400 mb-8">你通過了 ${currentZone.name} 的試煉。</p>
+                <p class="text-slate-400 mb-6">你通過了 ${currentZone.name} 的試煉。</p>
+                
+                <div class="bg-slate-800 p-4 rounded-xl mb-8 w-full max-w-sm border border-slate-700">
+                    <h3 class="text-lg font-bold text-white mb-3">本次戰報</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-400">⏱️ 耗時</span>
+                        <span class="font-mono text-white">${battleStats.duration} 秒</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-400">🎯 答對率</span>
+                        <span class="font-mono text-white">${battleStats.accuracy}%</span>
+                    </div>
+                    <div class="border-t border-slate-700 my-2 pt-2 flex justify-between items-center">
+                        <span class="text-amber-500 font-bold">✨ 總積分</span>
+                        <span class="font-mono text-2xl text-amber-400 font-bold">${battleStats.score}</span>
+                    </div>
+                </div>
+
                 <div class="flex gap-4">
                     <button onclick="returnToMap()" class="px-8 py-3 bg-slate-600 text-white rounded-lg font-bold shadow-lg">返回地圖</button>
-                    ${player.role !== 'Guide' ? `<button onclick="uploadScore()" class="px-8 py-3 bg-amber-600 text-white rounded-lg font-bold shadow-lg animate-pulse">上傳戰績</button>` : ''}
+                    ${player.role !== 'Guide' ? uploadBtn : ''}
                 </div>
             </div>`;
         }
