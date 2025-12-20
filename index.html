@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>西寧探險家：四界傳說</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            touch-action: manipulation;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-up { animation: slideUp 0.4s ease-out forwards; }
+        @keyframes bounce-custom { 0%, 100% { transform: translateY(-5%); } 50% { transform: translateY(0); } }
+        .animate-bounce-custom { animation: bounce-custom 1s infinite; }
+        @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); } 50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.8); } }
+        .node-pulse { animation: pulse-glow 2s infinite; }
+        @keyframes boss-pulse { 0%, 100% { box-shadow: 0 0 15px rgba(220, 38, 38, 0.6); transform: scale(1); } 50% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.9); transform: scale(1.1); } }
+        .node-boss { animation: boss-pulse 3s infinite; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .bg-grid-pattern { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
+        
+        .guide-content h3 { color: #fbbf24; font-size: 1.15rem; font-weight: 900; margin-top: 1.2rem; margin-bottom: 0.6rem; border-left: 4px solid #f59e0b; padding-left: 0.5rem; }
+        .guide-content h3:first-child { margin-top: 0; }
+        .guide-content p { margin-bottom: 0.5rem; color: #cbd5e1; line-height: 1.7; font-size: 0.95rem; }
+        .guide-content strong { color: #fff; font-weight: 900; }
+        .guide-content .highlight { color: #f472b6; font-weight: bold; background: rgba(244, 114, 182, 0.1); padding: 0 2px; border-radius: 2px; }
+        .guide-content ul { list-style-type: disc; padding-left: 1.2rem; margin-bottom: 0.8rem; color: #94a3b8; font-size: 0.95rem; }
+        .guide-content li { margin-bottom: 0.35rem; }
+        .guide-content .note { background: #1e293b; padding: 0.5rem; border-radius: 0.5rem; border: 1px solid #334155; margin-top: 0.5rem; font-size: 0.9rem; color: #93c5fd; }
+
+        /* Leaderboard Table Alignment */
+        .leaderboard-table { table-layout: fixed; }
+        .leaderboard-table th { @apply text-left p-3 text-amber-500 border-b border-slate-600 font-bold bg-slate-800; }
+        .leaderboard-table td { @apply p-3 border-b border-slate-700/50 truncate; }
+        .leaderboard-table tr:hover { @apply bg-slate-800/50; }
+        .col-rank { width: 15%; text-align: center; }
+        .col-player { width: 30%; }
+        .col-role { width: 30%; }
+        .col-level { width: 15%; text-align: center; }
+        .col-score { width: 10%; text-align: right; }
+    </style>
+</head>
+<body class="overflow-hidden select-none h-screen flex flex-col">
+
+    <div id="app" class="w-full h-full flex flex-col relative"></div>
+
+    <!-- UI Components (Modal & Toast) -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center p-4">
+        <div class="bg-slate-800 border-2 border-amber-500 rounded-xl max-w-md w-full p-6 shadow-2xl transform scale-100 transition-transform animate-fade-in flex flex-col max-h-[80vh]">
+            <h3 id="modal-title" class="text-xl font-bold text-white mb-4 flex-shrink-0">標題</h3>
+            <div id="modal-content" class="mb-6 text-slate-300 overflow-y-auto flex-1 text-sm whitespace-pre-wrap">內容</div>
+            <div id="modal-input-container" class="mb-4 hidden flex-shrink-0">
+                <input type="text" id="modal-input" class="w-full bg-slate-900 border border-slate-600 rounded p-2 text-white focus:border-amber-500 outline-none" placeholder="">
+            </div>
+            <div class="flex justify-end gap-3 flex-shrink-0">
+                <button id="modal-cancel" class="px-4 py-2 text-slate-400 hover:text-white rounded">取消</button>
+                <button id="modal-confirm" class="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded font-bold">確定</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-800 border border-amber-500 text-white px-6 py-3 rounded-full shadow-2xl z-[110] hidden opacity-0 transition-opacity duration-300 flex items-center gap-2">
+        <i data-lucide="info" class="w-5 h-5 text-amber-500"></i>
+        <span id="toast-message" class="font-bold">訊息</span>
+    </div>
+
+    <script>
+        // --- 設定 ---
+        // 請務必確認這裡的網址是您「最新部署」的網址
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxUjnGfXcFhDSSfWCHUvRhSgoZ_lY_Bd2l-50O5i3KSKMq88Rjhpaq2Tc_jDQppe_tiUQ/exec";
+        
+        // --- UI UTILS ---
+        function showModal({ title, message, inputPlaceholder, showCancel = true, onConfirm }) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-content').innerHTML = message || ''; // Changed to innerHTML to support formatted text
+            
+            const inputContainer = document.getElementById('modal-input-container');
+            const input = document.getElementById('modal-input');
+            
+            if (inputPlaceholder !== undefined) {
+                inputContainer.classList.remove('hidden');
+                input.value = '';
+                input.placeholder = inputPlaceholder;
+                setTimeout(() => input.focus(), 100);
+            } else {
+                inputContainer.classList.add('hidden');
+            }
+
+            const cancelBtn = document.getElementById('modal-cancel');
+            if (showCancel) {
+                cancelBtn.classList.remove('hidden');
+                cancelBtn.onclick = () => { modal.classList.add('hidden'); };
+            } else {
+                cancelBtn.classList.add('hidden');
+            }
+
+            const confirmBtn = document.getElementById('modal-confirm');
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+            newConfirmBtn.onclick = () => {
+                const val = input.value;
+                if(inputPlaceholder !== undefined && !val) return;
+                modal.classList.add('hidden');
+                if (onConfirm) onConfirm(val);
+            };
+
+            modal.classList.remove('hidden');
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('custom-toast');
+            document.getElementById('toast-message').innerText = msg;
+            toast.classList.remove('hidden');
+            void toast.offsetWidth; 
+            toast.classList.remove('opacity-0');
+            lucide.createIcons();
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        // --- CHARACTERS ---
+        const CHARACTERS = [
+            { id: 'kegui', name: '魔法師科貴', gender: 'boy', role: 'Mage', desc: '西寧國小智力擔當，擅長快速吸收知識。', abilityName: '博學多聞', abilityDesc: '答對問題獲得的經驗值 +30%', stats: { hp: 100, xpBonus: 1.3, dmgReduction: 0, healOnHit: 0 }, avatar: '🧙‍♂️' },
+            { id: 'chongyi', name: '野蠻人崇亦', gender: 'boy', role: 'Barbarian', desc: '體育課的王者，擁有驚人的體力。', abilityName: '蠻荒體魄', abilityDesc: '初始 HP 高達 130', stats: { hp: 130, xpBonus: 1.0, dmgReduction: 0, healOnHit: 0 }, avatar: '🏋️' },
+            { id: 'peiyu', name: '麻法師姵妤', gender: 'girl', role: 'Mage', desc: '心思細膩，懂得如何在戰鬥中保護自己。', abilityName: '元素治癒', abilityDesc: '答對問題時回復 5 點 HP', stats: { hp: 100, xpBonus: 1.0, dmgReduction: 0, healOnHit: 5 }, avatar: '🧚‍♀️' },
+            { id: 'yunqi', name: '女戰士妘萁', gender: 'girl', role: 'Warrior', desc: '亞馬遜的後裔，擅長防禦敵人的攻擊。', abilityName: '戰鬥格擋', abilityDesc: '答錯時受到的傷害減少 5 點', stats: { hp: 110, xpBonus: 1.0, dmgReduction: 5, healOnHit: 0 }, avatar: '🧝‍♀️' },
+            { id: 'book_immortal', name: '西寧書仙老頭', gender: 'elder', role: 'Guide', desc: '傳說中隱居在圖書館深處的老者，知曉所有奧祕。', abilityName: '萬卷天書', abilityDesc: '無法戰鬥與答題，但能查看所有關卡的重點攻略。', stats: { hp: 1, xpBonus: 0, dmgReduction: 0, healOnHit: 0 }, avatar: '👴' }
+        ];
+
+        // --- GUIDE DATA (詳細攻略版) ---
+        const GUIDE_DATA = {
+            'river': `
+                <div class="guide-content">
+                    <h3>🌊 河流的三部曲</h3>
+                    <p>流水改變地貌的力量主要有三種：<strong>侵蝕</strong>(破壞)、<strong>搬運</strong>(移動)、<strong>堆積</strong>(放下)。</p>
+                    
+                    <h3>1. 上游：年輕氣盛 (侵蝕力最強)</h3>
+                    <ul>
+                        <li><strong>特色</strong>：地勢陡峭、水流湍急。</li>
+                        <li><strong>石頭</strong>：充滿巨大的岩石，為了抵抗水流，形狀通常<span class="highlight">有稜有角</span>。</li>
+                        <li><strong>地形</strong>：河水用力向下切，形成深邃的<span class="highlight">V型谷</span>、峽谷(如太魯閣)、瀑布、壺穴。</li>
+                    </ul>
+
+                    <h3>2. 中游：漸趨平緩 (搬運為主)</h3>
+                    <ul>
+                        <li><strong>石頭</strong>：石頭在滾動中互相摩擦(磨蝕)，變得圓圓胖胖，稱為<span class="highlight">鵝卵石</span>。</li>
+                        <li><strong>曲流</strong>：河道彎曲處，水流力量不同。
+                            <ul class="mt-1 border-l-2 border-slate-500 pl-2">
+                                <li><strong>凹岸</strong>：水流沖刷，水深流急 → <span class="highlight">侵蝕作用</span> (危險！地基易被掏空)。</li>
+                                <li><strong>凸岸</strong>：水流緩慢，泥沙落下 → <span class="highlight">堆積作用</span> (安全，常有沙灘)。</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>3. 下游：步入老年 (堆積為主)</h3>
+                    <ul>
+                        <li><strong>特色</strong>：地勢平坦、流速緩慢，搬不動東西了。</li>
+                        <li><strong>地形</strong>：寬廣的<span class="highlight">沖積平原</span> (適合耕種居住)、出海口的<span class="highlight">三角洲</span>。</li>
+                        <li><strong>石頭</strong>：只剩下細小的<strong>泥沙</strong>。</li>
+                    </ul>
+                </div>`,
+            'coast': `
+                <div class="guide-content">
+                    <h3>🌊 海浪的雕刻刀：海蝕地形</h3>
+                    <p>海浪不斷拍打岩石，主要進行<span class="highlight">侵蝕作用</span>。</p>
+                    <ul>
+                        <li><strong>豆腐岩</strong>：海水沿著岩石的「節理」(裂縫) 切割，形成像豆腐方塊的地形 (基隆和平島)。</li>
+                        <li><strong>蕈狀岩</strong>：岩石上硬下軟，頸部被風沙和海水磨細了，像香菇 (野柳女王頭)。</li>
+                        <li><strong>演化三部曲</strong>：
+                            <br>1. 挖出洞 → <strong>海蝕洞</strong>
+                            <br>2. 打穿洞 → <strong>海蝕門 (海蝕拱門)</strong>
+                            <br>3. 頂部塌陷 → <strong>海蝕柱</strong>
+                        </li>
+                    </ul>
+
+                    <h3>🏖️ 海浪的搬運工：海積地形</h3>
+                    <p>海浪把沙子搬來堆積，主要進行<span class="highlight">堆積作用</span>。</p>
+                    <ul>
+                        <li><strong>沙洲</strong>：在海中堆積出的長條狀沙地 (如臺南鯤鯓)。</li>
+                        <li><strong>潟湖</strong>：被沙洲擋住，內側平靜的水域 (如七股潟湖，適合養蚵)。</li>
+                        <li><strong>陸連島</strong>：沙子把小島跟陸地連起來了 (如臺東金樽)。</li>
+                    </ul>
+                    <div class="note">💡 <strong>分辨關鍵</strong>：石頭變少變形是「侵蝕」；沙子變多是「堆積」。</div>
+                </div>`,
+            'rocks': `
+                <div class="guide-content">
+                    <h3>🪨 岩石三大家族</h3>
+                    <p>依據「形成過程」分類：</p>
+                    <ul>
+                        <li><strong>火成岩</strong> (岩漿冷卻)：
+                            <ul>
+                                <li><span class="highlight">安山岩</span>：質地堅硬，廟宇龍柱、石獅常用。</li>
+                                <li><span class="highlight">玄武岩</span>：黑黑的，常有氣孔 (澎湖柱狀玄武岩)。</li>
+                                <li><span class="highlight">花崗岩</span>：有黑白紅三色斑點，做地板常用。</li>
+                            </ul>
+                        </li>
+                        <li><strong>沉積岩</strong> (層層堆疊)：
+                            <ul>
+                                <li><span class="highlight">石灰岩</span>：古生物遺骸(珊瑚)堆積，滴<strong>稀鹽酸</strong>會冒泡 (產二氧化碳)，是水泥原料。</li>
+                                <li><strong>化石</strong>：最容易在沉積岩中發現！</li>
+                            </ul>
+                        </li>
+                        <li><strong>變質岩</strong> (高溫高壓)：
+                            <ul>
+                                <li><span class="highlight">大理岩</span>：由石灰岩變質而來，有花紋 (像大理石)。</li>
+                                <li><span class="highlight">板岩</span>：由頁岩變質而來，原住民蓋石板屋。</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>💎 礦物比硬度</h3>
+                    <p>硬度口訣：<span class="highlight">滑石方螢磷長石英黃剛金</span> (從小到大)</p>
+                    <ul>
+                        <li><strong>滑石</strong>：硬度1 (最軟)，滑滑的，做爽身粉。</li>
+                        <li><strong>指甲</strong>：硬度約 2.5。</li>
+                        <li><strong>方解石</strong>：硬度3，遇酸冒泡 (石灰岩成分)。</li>
+                        <li><strong>石英</strong>：硬度7，比玻璃硬，做玻璃、手錶。</li>
+                        <li><strong>金剛石</strong>：硬度10 (最硬)，就是鑽石。</li>
+                    </ul>
+                </div>`,
+            'disaster': `
+                <div class="guide-content">
+                    <h3>📉 地震數據看懂沒？</h3>
+                    <ul>
+                        <li><strong>芮氏規模 (Magnitude)</strong>：
+                            <ul>
+                                <li>代表地震釋放的<span class="highlight">能量大小</span>。</li>
+                                <li>全台灣<strong>只有一個數值</strong> (像燈泡瓦數)。</li>
+                                <li>有小數點 (如 6.8)，沒有單位。</li>
+                            </ul>
+                        </li>
+                        <li><strong>震度 (Intensity)</strong>：
+                            <ul>
+                                <li>代表你感覺到的<span class="highlight">搖晃程度</span>。</li>
+                                <li><strong>各地不同</strong> (離震央越近通常越大)。</li>
+                                <li>整數分級：0~7級 (共10級，5/6級分強弱)。</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h3>⛑️ 保命關鍵</h3>
+                    <ul>
+                        <li><strong>口訣</strong>：<span class="highlight">趴下、掩護、穩住</span> (DCH)。</li>
+                        <li><strong>不可以</strong>：搭電梯、點火、驚慌亂跑。</li>
+                        <li><strong>緊急避難包</strong>：水、乾糧、手電筒、電池、哨子 (求救用)、證件、保暖衣物。</li>
+                        <li><strong>家庭防災卡</strong>：約定災害發生時的集合地點與聯絡方式。</li>
+                    </ul>
+                </div>`,
+            'magnet1': `
+                <div class="guide-content">
+                    <h3>🧭 磁鐵與地球</h3>
+                    <ul>
+                        <li><strong>磁極</strong>：磁力最強在兩端 (N極/S極)，中間最弱。</li>
+                        <li><strong>交互作用</strong>：<span class="highlight">同極相斥，異極相吸</span>。</li>
+                        <li><strong>折斷後</strong>：每一小段仍有 N、S 兩極 (磁極不會消失)。</li>
+                    </ul>
+                    
+                    <h3>🌍 地球是個大磁鐵</h3>
+                    <ul>
+                        <li><strong>指北針原理</strong>：指北針的箭頭是 N 極。因為「異極相吸」，它指向北方，表示<strong>地球的北方其實是地磁的 S 極</strong>。</li>
+                        <li><strong>口訣</strong>：地北是磁南，地南是磁北。</li>
+                    </ul>
+                </div>`,
+            'magnet2': `
+                <div class="guide-content">
+                    <h3>⚡ 電流磁效應</h3>
+                    <ul>
+                        <li><strong>奧斯特</strong>發現：通電的電線會讓旁邊的指北針偏轉 (電生磁)。</li>
+                        <li><strong>安培右手定則</strong> (簡易判斷)：
+                            <br>1. 電流方向改變 → 磁場方向改變 (指針偏轉相反)。
+                            <br>2. 電線位置改變 (在指北針上方 vs 下方) → 指針偏轉方向相反。
+                        </li>
+                    </ul>
+
+                    <h3>🔋 超級電磁鐵</h3>
+                    <p>如何讓電磁鐵磁力變強？</p>
+                    <ol>
+                        <li><strong>串聯電池</strong> (增加電壓/電流)。</li>
+                        <li><strong>增加線圈圈數</strong>。</li>
+                        <li>線圈內放入<span class="highlight">鐵棒</span> (磁化後磁力大增)。</li>
+                    </ol>
+                    <div class="note">⚠️ 電磁鐵只有通電時才有磁性，斷電磁性消失。</div>
+                </div>`,
+            'magnet3': `
+                <div class="guide-content">
+                    <h3>⚙️ 馬達 (電動機)</h3>
+                    <ul>
+                        <li><strong>原理</strong>：利用<span class="highlight">電磁鐵</span>與永久磁鐵間「同極相斥、異極相吸」產生推力讓軸心旋轉。</li>
+                        <li><strong>應用</strong>：凡是「會轉動」的電器通常都有馬達。
+                            <br>✅ 電風扇、洗衣機、吹風機、抽水馬達。
+                            <br>❌ 電鍋、烤箱、電燈 (這些是生熱或發光)。
+                        </li>
+                    </ul>
+
+                    <h3>🚄 磁浮列車</h3>
+                    <ul>
+                        <li><strong>原理</strong>：利用磁力讓車體<span class="highlight">懸浮</span>在軌道上。</li>
+                        <li><strong>優點</strong>：沒有接觸摩擦力 → 速度快、噪音小、震動小。</li>
+                    </ul>
+                </div>`,
+            'solution1': `
+                <div class="guide-content">
+                    <h3>💧 溶解的奧祕</h3>
+                    <ul>
+                        <li><strong>溶解</strong>：溶質(鹽)均勻散布在溶劑(水)中，看不見顆粒。</li>
+                        <li><strong>重量守恆</strong>：溶解後，鹽巴沒有消失！<span class="highlight">鹽水重 = 水重 + 鹽重</span>。</li>
+                    </ul>
+
+                    <h3>🔥 誰溶得快？誰溶得多？</h3>
+                    <ul>
+                        <li><strong>加速溶解</strong> (溶得快)：攪拌、加熱、磨碎 (變粉末)。</li>
+                        <li><strong>增加溶解量</strong> (溶得多)：通常<strong>提高溫度</strong>可以溶更多 (如砂糖)。</li>
+                        <li><strong>飽和</strong>：水吃飽了！再也溶不進去，會有沉澱。</li>
+                    </ul>
+                </div>`,
+            'solution2': `
+                <div class="guide-content">
+                    <h3>🧪 酸鹼變色龍</h3>
+                    <p>超級口訣：<span class="highlight">酸紅鹼藍</span> (石蕊試紙)</p>
+                    <ul>
+                        <li><strong>酸性</strong>：紅石蕊不變，藍石蕊變<span class="highlight">紅</span>。
+                            <br>Ex: 檸檬汁、醋、汽水、胃酸。
+                        </li>
+                        <li><strong>鹼性</strong>：藍石蕊不變，紅石蕊變<span class="highlight">藍</span>。
+                            <br>Ex: 小蘇打水、石灰水、氨水、肥皂水 (摸起來滑滑的)。
+                        </li>
+                        <li><strong>中性</strong>：試紙都不變色。
+                            <br>Ex: 食鹽水、純糖水。
+                        </li>
+                    </ul>
+                    <div class="note">💡 廣用試紙：紅橙黃(酸) ↔ 綠(中) ↔ 藍靛紫(鹼)</div>
+                </div>`,
+            'solution3': `
+                <div class="guide-content">
+                    <h3>⚡ 誰會導電？</h3>
+                    <p>能導電的水溶液稱為<span class="highlight">電解質</span>。</p>
+                    <ul>
+                        <li><strong>會導電</strong>：酸、鹼、鹽類水溶液。
+                            <br>(檸檬汁、小蘇打水、食鹽水、醋)
+                        </li>
+                        <li><strong>不會導電</strong>：糖水、酒精、純水。</li>
+                    </ul>
+                    
+                    <h3>⚗️ 酸鹼中和</h3>
+                    <ul>
+                        <li>酸 + 鹼 → <span class="highlight">鹽 + 水 + 熱</span> (會變熱！)。</li>
+                        <li>應用：胃酸過多吃胃藥(弱鹼)、被螞蟻咬(酸)塗氨水(鹼)。</li>
+                    </ul>
+                </div>`,
+            'force1': `
+                <div class="guide-content">
+                    <h3>💪 力是什麼？</h3>
+                    <p>力看不見，但可以看到它的<strong>效應</strong>：</p>
+                    <ol>
+                        <li><strong>形狀改變</strong>：捏黏土、壓彈簧。</li>
+                        <li><strong>運動狀態改變</strong>：讓靜止物體移動、變快、變慢、轉彎。</li>
+                    </ol>
+
+                    <h3>👻 接觸力 vs 超距力</h3>
+                    <ul>
+                        <li><strong>接觸力</strong>：一定要碰到才有力。
+                            <br>Ex: 推力、摩擦力、浮力、風力。
+                        </li>
+                        <li><strong>超距力</strong>：不用碰到就能作用。
+                            <br>Ex: <span class="highlight">地心引力</span>(重力)、磁力、靜電力。
+                        </li>
+                    </ul>
+                </div>`,
+            'force2': `
+                <div class="guide-content">
+                    <h3>⚖️ 測量力的大小</h3>
+                    <ul>
+                        <li><strong>工具</strong>：彈簧秤。</li>
+                        <li><strong>單位</strong>：<span class="highlight">公克重 (gw)</span> 或 牛頓 (N)。</li>
+                        <li><strong>虎克定律</strong>：在彈性限度內，<span class="highlight">彈簧伸長量與受力成正比</span>。
+                            <br>(掛越重，伸長越長。掛2倍重，伸長2倍)
+                        </li>
+                        <li><strong>歸零</strong>：測量前要先歸零，且要在受力方向上歸零。</li>
+                    </ul>
+                </div>`,
+            'force3': `
+                <div class="guide-content">
+                    <h3>🚫 摩擦力</h3>
+                    <ul>
+                        <li><strong>方向</strong>：永遠跟物體運動方向<span class="highlight">相反</span> (阻礙運動)。</li>
+                        <li><strong>影響因素</strong> (只跟這兩點有關)：
+                            <br>1. <strong>接觸面材質</strong>：越粗糙，摩擦力越大。
+                            <br>2. <strong>垂直正向力(重量)</strong>：壓得越重，摩擦力越大。
+                        </li>
+                        <li><strong>無關</strong>：跟接觸面積大小無關！</li>
+                    </ul>
+                    <div class="note">💡 拔河時鞋底要粗糙(增摩擦)；溜滑梯要光滑(減摩擦)。</div>
+                </div>`,
+            'economy1': `
+                <div class="guide-content">
+                    <h3>🌾 農業轉工業 (民國40-50年代)</h3>
+                    <ul>
+                        <li><strong>土地改革</strong> (順序必考)：
+                            <br>1. <strong>三七五減租</strong> (減輕佃農負擔)
+                            <br>2. <strong>公地放領</strong> (政府賣地給農民)
+                            <br>3. <strong>耕者有其田</strong> (地主多餘的地賣給農民)
+                        </li>
+                        <li><strong>進口替代</strong>：自己做不再買國外的 (輕工業：紡織、食品)。</li>
+                        <li><strong>出口導向</strong>：設立<span class="highlight">加工出口區</span> (高雄、楠梓、臺中)，引進外資，利用廉價勞力賺外匯。</li>
+                    </ul>
+                </div>`,
+            'economy2': `
+                <div class="guide-content">
+                    <h3>🏗️ 經濟起飛與轉型 (民國60年代後)</h3>
+                    <ul>
+                        <li><strong>十大建設</strong>：蔣經國推動。
+                            <br>1. <strong>交通</strong>：中山高、鐵路電氣化、中正機場。
+                            <br>2. <strong>重工業</strong>：中鋼、中船、石化工業。
+                        </li>
+                        <li><strong>高科技產業</strong>：設立<span class="highlight">新竹科學園區</span> (台灣矽谷)。</li>
+                        <li><strong>產業升級</strong>：從勞力密集(代工) → 技術/資本密集(研發、自創品牌)。</li>
+                    </ul>
+                </div>`,
+            'society1': `
+                <div class="guide-content">
+                    <h3>🚄 一日生活圈</h3>
+                    <ul>
+                        <li><strong>定義</strong>：交通革新縮短了「時間距離」。</li>
+                        <li><strong>功臣</strong>：<span class="highlight">高速鐵路 (HSR)</span>、捷運、高速公路。</li>
+                        <li><strong>生活圈</strong>：滿足就業、就學、購物、醫療的活動範圍。</li>
+                    </ul>
+                </div>`,
+            'society2': `
+                <div class="guide-content">
+                    <h3>🏙️ 都市化現象</h3>
+                    <ul>
+                        <li><strong>定義</strong>：人口不斷向都市集中。</li>
+                        <li><strong>推拉理論</strong>：
+                            <br>📥 <strong>拉力</strong> (都市)：就業機會多、交通便利、醫療好。
+                            <br>📤 <strong>推力</strong> (鄉村)：就業少、收入低。
+                        </li>
+                        <li><strong>問題</strong>：
+                            <br>都市：房價高、塞車、噪音、熱島效應。
+                            <br>鄉村：人口老化、勞動力不足、隔代教養。</li>
+                    </ul>
+                </div>`,
+            'society3': `
+                <div class="guide-content">
+                    <h3>📉 人口與永續</h3>
+                    <ul>
+                        <li><strong>少子化</strong>：生得少。原因：養育成本高、晚婚。</li>
+                        <li><strong>高齡化</strong>：老得多。醫療進步壽命長。
+                            <br>→ 進入「高齡社會」，需長照、無障礙設施。
+                        </li>
+                        <li><strong>地方創生</strong>：鼓勵青年回鄉創業，結合在地特色發展經濟，解決城鄉差距。</li>
+                    </ul>
+                </div>`,
+            'history1': `
+                <div class="guide-content">
+                    <h3>🗿 史前時代 (沒有文字)</h3>
+                    <ul>
+                        <li><strong>舊石器</strong> (<span class="highlight">長濱文化</span>)：
+                            <br>打製石器、已知用火、採集漁獵、住洞穴。
+                        </li>
+                        <li><strong>新石器</strong> (大坌坑、圓山、<span class="highlight">卑南</span>)：
+                            <br>磨製石器、燒製陶器、<strong>開始農耕</strong>、定居、石板棺、玉器。
+                        </li>
+                        <li><strong>金屬器</strong> (<span class="highlight">十三行文化</span>)：
+                            <br>煉鐵、瑪瑙珠/玻璃珠 (代表有對外貿易)。
+                        </li>
+                    </ul>
+                </div>`,
+            'history2': `
+                <div class="guide-content">
+                    <h3>🏹 原住民族</h3>
+                    <ul>
+                        <li><strong>高山族</strong> (16族)：
+                            <br>★ <strong>阿美族</strong>：豐年祭、母系社會。
+                            <br>★ <strong>賽夏族</strong>：矮靈祭 (巴斯達隘)。
+                            <br>★ <strong>布農族</strong>：八部合音、打耳祭。
+                            <br>★ <strong>泰雅族</strong>：紋面、祖靈祭。
+                            <br>★ <strong>達悟族</strong>：飛魚祭、拼板舟 (蘭嶼)。
+                            <br>★ <strong>排灣/魯凱</strong>：百步蛇、石板屋、貴族制度。
+                        </li>
+                        <li><strong>平埔族</strong>：漢化較早，多居住在平原 (如西拉雅族)。</li>
+                    </ul>
+                </div>`,
+            'history3': `
+                <div class="guide-content">
+                    <h3>🚢 國際競爭時期 (荷西)</h3>
+                    <ul>
+                        <li><strong>荷蘭 (南部)</strong>：
+                            <br>據點：大員 (台南)。熱蘭遮城(行政)、普羅民遮城。
+                            <br>經濟：出口<span class="highlight">鹿皮、蔗糖</span>。引進<strong>黃牛</strong>。
+                            <br>文化：<strong>新港文書</strong> (用羅馬拼音拼原住民語，為了傳教與契約)。
+                            <br>事件：郭懷一抗荷事件。
+                        </li>
+                        <li><strong>西班牙 (北部)</strong>：
+                            <br>據點：基隆(聖薩爾瓦多城)、淡水(紅毛城)。
+                            <br>結局：被荷蘭人趕走。
+                        </li>
+                    </ul>
+                </div>`,
+            'history4': `
+                <div class="guide-content">
+                    <h3>👑 明鄭時期 (鄭氏)</h3>
+                    <ul>
+                        <li><strong>鄭成功</strong>：
+                            <br>目的：反清復明。趕走荷蘭人。
+                            <br>尊稱：國姓爺、延平郡王。
+                        </li>
+                        <li><strong>陳永華</strong> (鄭經的諸葛亮)：
+                            <br>建設：建議蓋<strong>孔廟</strong> (全臺首學，在台南)，推廣儒學。
+                        </li>
+                        <li><strong>軍隊屯田</strong>：
+                            <br>寓兵於農，解決糧食問題。地名：左營、新營、柳營。
+                        </li>
+                        <li><strong>結局</strong>：施琅攻台，鄭克塽投降清朝。</li>
+                    </ul>
+                </div>`,
+            'history5': `
+                <div class="guide-content">
+                    <h3>🏮 清領初期</h3>
+                    <ul>
+                        <li><strong>渡台禁令</strong>：
+                            <br>1. 需申請許可證。
+                            <br>2. <span class="highlight">禁止攜帶家眷</span> (導致男女失衡，多<strong>羅漢腳</strong>)。
+                            <br>3. 廣東人禁止來台 (後來開放)。
+                        </li>
+                        <li><strong>社會</strong>：
+                            <br>械鬥 (閩粵械鬥、漳泉械鬥)。
+                            <br>民變 (朱一貴、林爽文)。
+                        </li>
+                        <li><strong>水利建設</strong> (必考)：
+                            <br>★ <strong>瑠公圳</strong> (郭錫瑠)：灌溉台北盆地。
+                            <br>★ <strong>八堡圳</strong> (施世榜)：灌溉彰化平原 (全台最大)。
+                            <br>★ <strong>曹公圳</strong> (曹謹)：灌溉高雄平原。
+                        </li>
+                    </ul>
+                </div>`
+        };
+
+        // --- GAME DATA (擴充題庫架構) ---
+        // 本地題目已清空，將由 fetchExtendedQuestions 從雲端讀取
+        const GAME_DATA = {
+            worlds: [
+                {
+                    id: 'world1',
+                    title: '第一世界：地質與磁場 (6上自然)',
+                    bg: 'from-slate-900 via-slate-800 to-black',
+                    zones: [
+                        { id: 'river', name: '蜿蜒溪流', icon: 'droplet', color: 'text-blue-500', mapPos: { top: '80%', left: '10%' }, enemies: [{ name: '上游巨石怪', hp: 225, dialogue: '我的題庫深不見底！', questions: [] }] },
+                        { id: 'coast', name: '狂風海岸', icon: 'map', color: 'text-cyan-500', mapPos: { top: '65%', left: '20%' }, enemies: [{ name: '海蝕幽靈', hp: 225, dialogue: '你能抵擋海浪的攻勢嗎？', questions: [] }] },
+                        { id: 'rocks', name: '礦物王國', icon: 'hammer', color: 'text-gray-400', mapPos: { top: '50%', left: '30%' }, enemies: [{ name: '岩石巨人', hp: 225, dialogue: '硬碰硬，你贏不了！', questions: [] }] },
+                        { id: 'disaster', name: '震動山脈', icon: 'alert-triangle', color: 'text-red-500', mapPos: { top: '35%', left: '40%' }, enemies: [{ name: '震波龍', hp: 225, dialogue: '震度7級的衝擊！', questions: [] }] },
+                        { id: 'magnet1', name: '迷霧磁林', icon: 'compass', color: 'text-purple-400', mapPos: { top: '35%', left: '60%' }, enemies: [{ name: '地磁守護者', hp: 225, dialogue: '指南針會告訴你真相！', questions: [] }] },
+                        { id: 'magnet2', name: '雷電遺跡', icon: 'zap', color: 'text-yellow-400', mapPos: { top: '55%', left: '70%' }, enemies: [{ name: '線圈魔像', hp: 225, dialogue: '電流增強，磁力增強！', questions: [] }] },
+                        { id: 'magnet3', name: '磁浮未來城', icon: 'cpu', color: 'text-pink-400', mapPos: { top: '80%', left: '80%' }, enemies: [{ name: '機甲博士', hp: 225, dialogue: '馬達全速運轉！', questions: [] }] },
+                        { id: 'boss1', name: '魔王關：地心試煉', icon: 'skull', color: 'text-purple-600', mapPos: { top: '55%', left: '50%' }, enemies: [{ name: '磁力龍王', hp: 500, dialogue: '吾乃地心之主，接受最終試煉吧！', questions: [] }] }
+                    ]
+                },
+                // --- 第二世界 (5上自然) ---
+                {
+                    id: 'world2',
+                    title: '第二世界：水鍊金與力場 (5上自然)',
+                    bg: 'from-indigo-900 via-purple-900 to-black',
+                    zones: [
+                        { id: 'solution1', name: '神秘溶洞', icon: 'flask-conical', color: 'text-blue-300', mapPos: { top: '80%', left: '20%' }, enemies: [{ name: '結晶史萊姆', hp: 225, dialogue: '飽和...析出...', questions: [] }] },
+                        { id: 'solution2', name: '酸鹼實驗室', icon: 'test-tube', color: 'text-green-400', mapPos: { top: '60%', left: '30%' }, enemies: [{ name: '石蕊試劑怪', hp: 225, dialogue: '變紅還是變藍？', questions: [] }] },
+                        { id: 'solution3', name: '導電光廊', icon: 'lightbulb', color: 'text-yellow-300', mapPos: { top: '40%', left: '40%' }, enemies: [{ name: '電解質幽靈', hp: 225, dialogue: '電流通過中！', questions: [] }] },
+                        { id: 'force1', name: '重力荒野', icon: 'arrow-down', color: 'text-orange-500', mapPos: { top: '30%', left: '60%' }, enemies: [{ name: '引力巨獸', hp: 225, dialogue: '萬有引力！', questions: [] }] },
+                        { id: 'force2', name: '測量高塔', icon: 'scale', color: 'text-teal-400', mapPos: { top: '50%', left: '75%' }, enemies: [{ name: '精準機關人', hp: 225, dialogue: '1克都不能差！', questions: [] }] },
+                        { id: 'force3', name: '摩擦峽谷', icon: 'move', color: 'text-rose-500', mapPos: { top: '80%', left: '85%' }, enemies: [{ name: '阻力岩怪', hp: 225, dialogue: '寸步難行！', questions: [] }] },
+                        { id: 'boss2', name: '魔王關：真理聖殿', icon: 'skull', color: 'text-purple-600', mapPos: { top: '50%', left: '50%' }, enemies: [{ name: '真理賢者', hp: 500, dialogue: '水與力的奧義，你真的參透了嗎？', questions: [] }] }
+                    ]
+                },
+                // --- 第三世界 (6上社會) ---
+                {
+                    id: 'world3',
+                    title: '第三世界：社會與變遷 (6上社會)',
+                    bg: 'from-amber-900 via-stone-800 to-black',
+                    zones: [
+                        { id: 'economy1', name: '起飛平原', icon: 'wheat', color: 'text-amber-500', mapPos: { top: '80%', left: '15%' }, enemies: [{ name: '土地改革者', hp: 225, dialogue: '耕者有其田！', questions: [] }] },
+                        { id: 'economy2', name: '矽晶山谷', icon: 'microchip', color: 'text-teal-500', mapPos: { top: '55%', left: '30%' }, enemies: [{ name: '晶圓機器人', hp: 225, dialogue: '產業正在升級中...', questions: [] }] },
+                        { id: 'society1', name: '生活圈迷宮', icon: 'train-front', color: 'text-blue-500', mapPos: { top: '30%', left: '50%' }, enemies: [{ name: '捷運速龍', hp: 225, dialogue: '一日生活圈！', questions: [] }] },
+                        { id: 'society2', name: '擁擠都會', icon: 'building-2', color: 'text-gray-400', mapPos: { top: '45%', left: '75%' }, enemies: [{ name: '塞車怪獸', hp: 225, dialogue: '叭叭叭！', questions: [] }] },
+                        { id: 'society3', name: '永續方舟', icon: 'leaf', color: 'text-green-500', mapPos: { top: '80%', left: '85%' }, enemies: [{ name: '時光守護者', hp: 225, dialogue: '為了下一代！', questions: [] }] },
+                        { id: 'boss3', name: '魔王關：經建總署', icon: 'skull', color: 'text-purple-600', mapPos: { top: '50%', left: '50%' }, enemies: [{ name: '發展部長', hp: 500, dialogue: '社會的變遷，你跟上了嗎？', questions: [] }] }
+                    ]
+                },
+                // --- 第四世界 (5上社會) ---
+                {
+                    id: 'world4',
+                    title: '第四世界：歷史與文化 (5上社會)',
+                    bg: 'from-amber-900 via-blue-900 to-black',
+                    zones: [
+                        { id: 'history1', name: '史前遺跡', icon: 'fossil', color: 'text-amber-600', mapPos: { top: '80%', left: '15%' }, enemies: [{ name: '石器先祖', hp: 225, dialogue: '嗚嘎嘎！(原始人語)', questions: [] }] },
+                        { id: 'history2', name: '部落傳說', icon: 'feather', color: 'text-emerald-500', mapPos: { top: '55%', left: '25%' }, enemies: [{ name: '百步蛇神', hp: 225, dialogue: '祖靈在看著你。', questions: [] }] },
+                        { id: 'history3', name: '航海時代', icon: 'ship', color: 'text-sky-500', mapPos: { top: '30%', left: '50%' }, enemies: [{ name: '荷蘭船長', hp: 225, dialogue: '要買鹿皮嗎？', questions: [] }] },
+                        { id: 'history4', name: '明鄭王朝', icon: 'crown', color: 'text-red-600', mapPos: { top: '45%', left: '75%' }, enemies: [{ name: '延平郡王', hp: 225, dialogue: '驅逐紅毛番！', questions: [] }] },
+                        { id: 'history5', name: '文化交融', icon: 'scroll', color: 'text-indigo-500', mapPos: { top: '80%', left: '85%' }, enemies: [{ name: '渡台移民', hp: 225, dialogue: '唐山過台灣，心肝結歸丸...', questions: [] }] },
+                        { id: 'boss4', name: '魔王關：歷史迴廊', icon: 'skull', color: 'text-purple-600', mapPos: { top: '50%', left: '50%' }, enemies: [{ name: '時光守護神', hp: 500, dialogue: '歷史的洪流，你能記住多少？', questions: [] }] }
+                    ]
+                }
+            ]
+        };
+
+        // --- STATE ---
+        let gameState = 'START'; 
+        let currentWorldIndex = 0;
+        let player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+        let currentZone = null, currentEnemy = null, currentQuestion = null;
+        let battleLog = [], enemyIndex = 0, showZoneInfo = null, questionCountInBattle = 0;
+        let showCheerMessage = false;
+        let leaderboardData = [];
+        let showLeaderboard = false;
+        let activeLeaderboardTab = 0;
+        let showGameIntro = false;
+        let cheatCodeBuffer = "";
+        let isQuestionsLoaded = false; // 新增：追蹤題庫是否載入
+        let showDebugButton = false; // 新增：控制除錯按鈕顯示
+
+        // --- HELPERS ---
+        function addLog(text) { battleLog.push(text); if (battleLog.length > 4) battleLog.shift(); renderApp(); }
+        
+        function unlockZone(zoneId) {
+            if (player.characterId === 'book_immortal') return true;
+            const world = GAME_DATA.worlds[currentWorldIndex];
+            const index = world.zones.findIndex(z => z.id === zoneId);
+            if (index === 0) return true;
+            
+            // Special handling for Boss Zone: Unlocked if the previous zone (last normal zone) is completed
+            const prevZoneId = world.zones[index - 1].id;
+            return player.completedZones.includes(prevZoneId);
+        }
+
+        function getUnsolvedQuestion(enemy) {
+            const available = enemy.questions.filter(q => !player.solvedQuestionIds.includes(q.id));
+            if (available.length === 0) return null;
+            return available[Math.floor(Math.random() * available.length)];
+        }
+
+        function prepareQuestion(q) {
+            let indices = q.options.map((_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+            return { ...q, shuffledOptions: indices.map(i => q.options[i]), correctIndex: indices.indexOf(q.a) };
+        }
+        
+        // --- FETCH EXTENDED QUESTIONS ---
+        // 新增一個診斷函數
+        async function diagnoseConnection() {
+            if (!GAS_API_URL) {
+                showModal({title: "設定錯誤", message: "請先在程式碼中設定 GAS_API_URL！", showCancel: false});
+                return;
+            }
+            
+            showToast("正在診斷連線...");
+            try {
+                const start = Date.now();
+                const res = await fetch(GAS_API_URL + "?op=questions&t=" + start);
+                const text = await res.text(); // 先讀成文字，檢查是否為 HTML 錯誤頁面
+                
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (e) {
+                    throw new Error("API 回傳的不是 JSON。可能是權限不足 (需要設為所有人)，或 Apps Script 發生錯誤。\n回傳內容前 100 字:\n" + text.substring(0, 100));
+                }
+
+                if (data.error) {
+                    throw new Error("GAS 內部錯誤: " + data.message);
+                }
+
+                // 統計題目
+                let stats = "";
+                let total = 0;
+                Object.keys(data).forEach(zoneId => {
+                    stats += `${zoneId}: ${data[zoneId].length} 題\n`;
+                    total += data[zoneId].length;
+                });
+
+                if (total === 0) {
+                    showModal({
+                        title: "連線成功但無題目", 
+                        message: "成功連線到 GAS，但沒有讀取到任何題目。\n請檢查：\n1. Google 試算表是否有 'world1' 等工作表？\n2. 工作表名稱是否包含 'world' (不分大小寫)？\n3. 內容是否有從 A2 開始填寫？",
+                        showCancel: false
+                    });
+                } else {
+                    showModal({
+                        title: "連線診斷成功", 
+                        message: `成功讀取到 ${total} 題！\n\n詳細分佈：\n${stats}\n\n如果不見題目，請重新整理網頁。`,
+                        showCancel: false
+                    });
+                    // 重新載入題目
+                    processQuestionData(data);
+                }
+
+            } catch (e) {
+                showModal({
+                    title: "連線失敗", 
+                    message: "無法連線到後端。\n錯誤訊息: " + e.message + "\n\n常見原因：\n1. GAS 部署時「誰可以存取」未設為「所有人」。\n2. GAS 程式碼未更新 (請建立新版部署)。",
+                    showCancel: false
+                });
+            }
+        }
+
+        function processQuestionData(data) {
+            let count = 0;
+            GAME_DATA.worlds.forEach(w => {
+                w.zones.forEach(z => {
+                    if (data[z.id] && Array.isArray(data[z.id])) {
+                        const enemy = z.enemies[0];
+                        // 清空舊題目避免重複
+                        enemy.questions = [];
+                        enemy.questions.push(...data[z.id]);
+                        count += data[z.id].length;
+                    }
+                });
+            });
+            
+            // Re-populate Boss Questions
+            GAME_DATA.worlds.forEach(world => {
+                const bossZone = world.zones.find(z => z.id.startsWith('boss'));
+                if (bossZone) {
+                    const bossEnemy = bossZone.enemies[0];
+                    bossEnemy.questions = []; 
+                    world.zones.forEach(z => {
+                        if (z !== bossZone) {
+                            z.enemies.forEach(e => {
+                                bossEnemy.questions.push(...e.questions);
+                            });
+                        }
+                    });
+                }
+            });
+            
+            if (count > 0) {
+                isQuestionsLoaded = true;
+                showToast(`已載入 ${count} 題！`);
+            }
+        }
+
+        async function fetchExtendedQuestions() {
+            if (!GAS_API_URL) return;
+            try {
+                const res = await fetch(GAS_API_URL + "?op=questions&t=" + new Date().getTime());
+                const data = await res.json();
+                processQuestionData(data);
+            } catch (e) {
+                console.warn("Auto-fetch failed, use debug button.", e);
+            }
+        }
+        
+        // Call immediately on load
+        fetchExtendedQuestions();
+
+        // --- CHEAT CODE LOGIC ---
+        document.addEventListener('keydown', (e) => {
+            
+            if (e.key.length === 1) {
+                cheatCodeBuffer += e.key;
+                if (cheatCodeBuffer.length > 30) {
+                    cheatCodeBuffer = cheatCodeBuffer.slice(-30);
+                }
+            }
+
+            const targetMap = "2u/2u/xl3gw94gj94xk7";
+            const targetDebug = "hk4g4xu06vu04";
+            const bufferNormalized = cheatCodeBuffer.replace(/\s/g, '');
+            
+            // 既有地圖密技
+            if (gameState === 'MAP' && bufferNormalized.includes(targetMap)) {
+                activateCheat();
+                cheatCodeBuffer = ""; 
+            }
+
+            // 新增：顯示除錯按鈕密技 (僅限主畫面)
+            if (gameState === 'START' && bufferNormalized.includes(targetDebug)) {
+                showDebugButton = true;
+                showToast("除錯模式已啟用");
+                renderApp();
+                cheatCodeBuffer = "";
+            }
+        });
+
+        function handleTitleClick() {
+             if (gameState !== 'MAP') return;
+             if (!window.titleClickCount) window.titleClickCount = 0;
+             window.titleClickCount++;
+             
+             if (window.titleClickCount >= 5) {
+                 window.titleClickCount = 0;
+                 showModal({
+                    title: '密技',
+                    inputPlaceholder: '請輸入密技指令',
+                    onConfirm: (code) => {
+                        if (code && code.replace(/\s/g, '') === "2u/2u/xl3gw94gj94xk7") {
+                            activateCheat();
+                        }
+                    }
+                 });
+             }
+             
+             if (window.titleClickTimer) clearTimeout(window.titleClickTimer);
+             window.titleClickTimer = setTimeout(() => { window.titleClickCount = 0; }, 2000);
+        }
+
+        function activateCheat() {
+            showToast("密技啟動：老師太帥了！得分 9999！");
+            
+            const currentWorld = GAME_DATA.worlds[currentWorldIndex];
+            currentWorld.zones.forEach(z => {
+                if (!player.completedZones.includes(z.id)) {
+                    player.completedZones.push(z.id);
+                }
+            });
+            
+            player.level = 99;
+            player.hp = 9999;
+            player.maxHp = 9999;
+            
+            uploadCheatScore();
+            
+            renderApp();
+        }
+
+        function uploadCheatScore() {
+            if (!GAS_API_URL) return;
+            
+            // 如果玩家尚未設定名稱，跳出視窗詢問
+            let defaultName = player.name;
+            if (!defaultName || defaultName === CHARACTERS.find(c => c.id === player.characterId).name) {
+                 defaultName = "神祕高手";
+            }
+
+            showModal({
+                title: '登錄英雄榜 (密技版)',
+                message: '請輸入您的名字：',
+                inputPlaceholder: defaultName,
+                onConfirm: (userName) => {
+                    if (!userName) userName = "神祕高手";
+                    player.name = userName;
+
+                    const payload = {
+                        name: userName,
+                        role: CHARACTERS.find(c => c.id === player.characterId).name,
+                        world: GAME_DATA.worlds[currentWorldIndex].title,
+                        level: 99,
+                        score: 9999
+                    };
+                    
+                    fetch(GAS_API_URL, {
+                        method: "POST",
+                        mode: "no-cors", 
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    }).then(() => {
+                        console.log("Cheat score uploaded.");
+                        showToast("密技成績已登錄！");
+                    });
+                }
+            });
+        }
+
+
+        // --- API ACTIONS ---
+        function uploadScore() {
+            if (!GAS_API_URL) {
+                showToast("請先設定 GAS_API_URL！");
+                return;
+            }
+            
+            showModal({
+                title: '上傳戰績',
+                message: '請輸入您的名字以便登錄英雄榜：',
+                inputPlaceholder: '未名探險家',
+                onConfirm: (userName) => {
+                    if (!userName) return;
+                    player.name = userName;
+
+                    const payload = {
+                        name: userName,
+                        role: CHARACTERS.find(c => c.id === player.characterId).name,
+                        world: GAME_DATA.worlds[currentWorldIndex].title,
+                        level: player.level,
+                        score: player.solvedQuestionIds.length
+                    };
+
+                    addLog("正在上傳戰績...");
+                    
+                    fetch(GAS_API_URL, {
+                        method: "POST",
+                        mode: "no-cors", 
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(() => {
+                        addLog("戰績上傳成功！");
+                        showToast("戰績上傳成功！");
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        addLog("上傳失敗，請檢查網路。");
+                        showToast("上傳失敗！");
+                    });
+                }
+            });
+        }
+
+        function fetchLeaderboard() {
+            if (!GAS_API_URL) {
+                // Mock data if no URL
+                leaderboardData = [
+                    { name: "測試玩家1", role: "魔法師科貴", world: "第一世界", level: 5, score: 20 },
+                    { name: "測試玩家2", role: "女戰士妘萁", world: "第一世界", level: 3, score: 15 }
+                ];
+                renderApp();
+                return;
+            }
+
+            fetch(GAS_API_URL)
+            .then(response => response.json())
+            .then(data => {
+                leaderboardData = data;
+                renderApp();
+            })
+            .catch(error => {
+                console.error("Error fetching leaderboard:", error);
+                leaderboardData = []; 
+                renderApp();
+            });
+        }
+
+        function toggleLeaderboard() {
+            showLeaderboard = !showLeaderboard;
+            if (showLeaderboard) {
+                fetchLeaderboard();
+            }
+            renderApp();
+        }
+
+        function switchLeaderboardTab(index) {
+            activeLeaderboardTab = index;
+            renderApp();
+        }
+        
+        function toggleGameIntro() {
+            showGameIntro = !showGameIntro;
+            renderApp();
+        }
+
+        // --- ACTIONS ---
+        function switchWorld(index) {
+            currentWorldIndex = index;
+            showZoneInfo = null;
+            renderApp();
+        }
+
+        function toCharSelect() { gameState = 'CHAR_SELECT'; renderApp(); }
+        
+        function returnToMainMenu() { 
+            gameState = 'START';
+            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+            battleLog = [];
+            currentWorldIndex = 0;
+            renderApp();
+        }
+
+        function forgetClothes() {
+            gameState = 'START';
+            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: null, stats: {}, solvedQuestionIds: [] };
+            battleLog = [];
+            currentWorldIndex = 0;
+            showCheerMessage = true;
+            renderApp();
+            setTimeout(() => {
+                showCheerMessage = false;
+                renderApp();
+            }, 3000);
+        }
+
+        function selectCharacter(charId) {
+            const char = CHARACTERS.find(c => c.id === charId);
+            // Default player name is character name until they upload score
+            player = { name: char.name, role: char.role, hp: char.stats.hp, maxHp: char.stats.hp, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], characterId: char.id, stats: char.stats, solvedQuestionIds: [] };
+            gameState = 'MAP';
+            battleLog = char.id === 'book_immortal' ? ['歡迎書仙！', '攻略模式開啟。'] : [`歡迎 ${char.name}！`, `能力：${char.abilityName}`];
+            if(char.id === 'book_immortal') {
+                GAME_DATA.worlds.forEach(w => w.zones.forEach(z => player.completedZones.push(z.id)));
+            }
+            renderApp();
+        }
+
+        function enterZone(zoneId) {
+            // 防呆：如果題目還沒載入，提示用戶
+            const world = GAME_DATA.worlds[currentWorldIndex];
+            const zone = world.zones.find(z => z.id === zoneId);
+            
+            if (player.characterId !== 'book_immortal' && !zone.id.startsWith('boss')) {
+                if (zone.enemies[0].questions.length === 0) {
+                    showModal({
+                        title: "題庫未就緒", 
+                        message: "尚未從雲端讀取到題目，請先按右下角的「測試連線」檢查。", 
+                        showCancel: false
+                    });
+                    return;
+                }
+            }
+
+            if (!unlockZone(zone.id)) return;
+            currentZone = zone;
+            showZoneInfo = null;
+            if (player.characterId === 'book_immortal') { gameState = 'GUIDE'; renderApp(); } 
+            else { enemyIndex = 0; startBattle(zone.enemies[0]); }
+        }
+
+        function startBattle(enemy) {
+            const allQuestions = enemy.questions;
+            
+            let pool = [];
+            if (currentZone.id.startsWith('boss')) {
+                 pool = allQuestions.filter(q => !player.solvedQuestionIds.includes(q.id));
+                 if (pool.length === 0) {
+                     battleLog.push(`🎉 ${enemy.name} 試煉完成！`); 
+                     handleEnemyDefeat(enemy); 
+                     return; 
+                 }
+            } else {
+                 pool = [...allQuestions];
+            }
+
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            const battleQuestions = pool.slice(0, 15);
+            
+            enemy.battleQuestions = battleQuestions;
+            enemy.battleIndex = 0;
+
+            currentEnemy = { ...enemy, currentHp: 225 }; 
+            
+            if (battleQuestions.length > 0) {
+                currentQuestion = prepareQuestion(battleQuestions[0]);
+                gameState = 'BATTLE';
+                battleLog.push(`遭遇：${enemy.name}！`);
+            } else {
+                handleEnemyDefeat(enemy);
+            }
+            renderApp();
+        }
+
+        function handleAnswer(idx) {
+            if (!currentQuestion) return;
+            const isCorrect = idx === currentQuestion.correctIndex;
+            
+            if (isCorrect) {
+                currentEnemy.currentHp -= 15;
+                addLog('✅ 正確！傷害 15！');
+                if(!player.solvedQuestionIds.includes(currentQuestion.id)) player.solvedQuestionIds.push(currentQuestion.id);
+                if (player.stats.healOnHit > 0) player.hp = Math.min(player.maxHp, player.hp + player.stats.healOnHit);
+                const xpGain = Math.floor(15 * player.stats.xpBonus);
+                player.xp += xpGain;
+                if (player.xp >= player.maxXp) { player.xp -= player.maxXp; player.level++; player.maxXp = Math.floor(player.maxXp*1.5); player.hp = player.maxHp; addLog('🎉 升級！'); }
+                
+                // Check if battle logic needs next question
+                currentEnemy.battleIndex++;
+                if (currentEnemy.currentHp <= 0 || currentEnemy.battleIndex >= currentEnemy.battleQuestions.length) {
+                    handleEnemyDefeat(currentEnemy);
+                } else {
+                    const nextQ = currentEnemy.battleQuestions[currentEnemy.battleIndex];
+                    setTimeout(() => { currentQuestion = prepareQuestion(nextQ); renderApp(); }, 1000);
+                }
+            } else {
+                const dmg = Math.max(1, 15 - player.stats.dmgReduction);
+                player.hp -= dmg;
+                addLog(`❌ 錯誤！受傷 ${dmg}`);
+                addLog(`正解：${currentQuestion.options[currentQuestion.a]}`);
+                if (player.hp <= 0) setTimeout(() => { gameState = 'GAMEOVER'; renderApp(); }, 1000);
+                else renderApp();
+            }
+        }
+
+        function handleEnemyDefeat(enemy) {
+            addLog(`🏆 擊敗 ${enemy.name}！`);
+            const world = GAME_DATA.worlds[currentWorldIndex];
+            if (!player.completedZones.includes(currentZone.id)) player.completedZones.push(currentZone.id);
+            gameState = 'VICTORY';
+            renderApp();
+        }
+
+        function showZonePopup(zoneId) { if(unlockZone(zoneId)) { showZoneInfo = GAME_DATA.worlds[currentWorldIndex].zones.find(z => z.id === zoneId); renderApp(); } }
+        function closeZonePopup() { showZoneInfo = null; renderApp(); }
+        function returnToMap() { gameState = 'MAP'; showZoneInfo = null; renderApp(); }
+        function restartGame() { gameState = 'START'; renderApp(); }
+
+        // --- RENDER ---
+        function renderApp() {
+            const app = document.getElementById('app');
+            let content = '';
+            
+            if (showCheerMessage) {
+                content += `
+                <div class="fixed top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-black/80 pointer-events-none animate-fade-in">
+                    <div class="bg-amber-600 text-white px-8 py-4 rounded-xl text-2xl font-bold shadow-2xl transform scale-110">
+                        加油好嗎?
+                    </div>
+                </div>`;
+            }
+
+            if (gameState !== 'START' && gameState !== 'CHAR_SELECT') {
+                content += `
+                <header class="bg-slate-900 border-b border-slate-800 p-2 flex justify-between items-center z-20 shadow-lg">
+                    <div class="flex gap-2 items-center">
+                        <span class="font-bold text-amber-100 cursor-pointer select-none active:scale-95 transition-transform" onclick="handleTitleClick()">西寧探險家</span>
+                        ${gameState === 'MAP' ? `
+                        <div class="flex bg-slate-800 rounded p-1">
+                            <button onclick="switchWorld(0)" class="px-2 py-1 text-xs rounded ${currentWorldIndex===0 ? 'bg-amber-600 text-white' : 'text-slate-400'}">W1</button>
+                            <button onclick="switchWorld(1)" class="px-2 py-1 text-xs rounded ${currentWorldIndex===1 ? 'bg-indigo-600 text-white' : 'text-slate-400'}">W2</button>
+                            <button onclick="switchWorld(2)" class="px-2 py-1 text-xs rounded ${currentWorldIndex===2 ? 'bg-teal-600 text-white' : 'text-slate-400'}">W3</button>
+                            <button onclick="switchWorld(3)" class="px-2 py-1 text-xs rounded ${currentWorldIndex===3 ? 'bg-emerald-600 text-white' : 'text-slate-400'}">W4</button>
+                        </div>` : ''}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        ${player.role !== 'Guide' ? `<button onclick="toggleLeaderboard()" class="p-1.5 bg-yellow-600 hover:bg-yellow-500 rounded text-white shadow"><i data-lucide="trophy" class="w-4 h-4"></i></button>` : ''}
+                        <div class="text-xs text-slate-300">Lv.${player.level}</div>
+                        <button onclick="returnToMap()" class="px-2 py-1 bg-slate-700 text-xs rounded">地圖</button>
+                    </div>
+                </header>`;
+            }
+
+            content += `<main class="flex-1 overflow-auto bg-gradient-to-b ${GAME_DATA.worlds[currentWorldIndex].bg} relative w-full h-full">`;
+            
+            if (gameState === 'START') content += renderStart();
+            else if (gameState === 'CHAR_SELECT') content += renderCharSelect();
+            else if (gameState === 'MAP') content += renderMap();
+            else if (gameState === 'BATTLE') content += renderBattle();
+            else if (gameState === 'VICTORY') content += renderVictory();
+            else if (gameState === 'GAMEOVER') content += renderGameOver();
+            else if (gameState === 'GUIDE') content += renderGuide();
+
+            // Game Intro Modal
+            if (showGameIntro) {
+                content += `
+                <div class="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fade-in">
+                    <div class="bg-slate-900 border border-blue-500/50 w-full max-w-2xl h-3/4 rounded-xl flex flex-col shadow-2xl">
+                        <div class="flex justify-between items-center p-4 border-b border-slate-700">
+                            <h2 class="text-xl font-bold text-blue-400 flex items-center gap-2"><i data-lucide="book-open"></i> 遊戲介紹</h2>
+                            <button onclick="toggleGameIntro()" class="text-slate-400 hover:text-white">✕</button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-6 text-slate-300 space-y-4">
+                            <h3 class="text-lg font-bold text-white">故事背景</h3>
+                            <p>西寧國小正面臨一場跨越時空的危機！你需要運用自然與社會科的知識，通過四大世界的試煉，解開地質、磁場、水力與歷史的謎團。</p>
+                            <h3 class="text-lg font-bold text-white">四大世界</h3>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><span class="text-amber-400">第一世界</span>：探索河流地形與磁鐵奧祕 (6上自然)。</li>
+                                <li><span class="text-indigo-400">第二世界</span>：掌握水溶液性質與力的作用 (5上自然)。</li>
+                                <li><span class="text-teal-400">第三世界</span>：見證台灣經濟起飛與社會變遷 (6上社會)。</li>
+                                <li><span class="text-emerald-400">第四世界</span>：穿越史前與大航海時代的歷史 (5上社會)。</li>
+                            </ul>
+                            <h3 class="text-lg font-bold text-white">角色介紹</h3>
+                            <ul class="list-disc pl-5 space-y-1">
+                                <li><strong>科貴</strong>：經驗值加成，升級快。</li>
+                                <li><strong>崇亦</strong>：血量高，耐打。</li>
+                                <li><strong>姵妤</strong>：答對回血，續航力強。</li>
+                                <li><strong>妘萁</strong>：答錯減傷，容錯率高。</li>
+                                <li><strong>書仙老頭</strong>：無法戰鬥，專門用來查看「攻略筆記」。</li>
+                            </ul>
+                            <h3 class="text-lg font-bold text-white">玩法說明</h3>
+                            <p>選擇關卡進行答題戰鬥，答對扣敵血，答錯扣己血。每個世界最後都有一個擁有 500 血量的「魔王關」，考驗你的綜合實力！</p>
+                        </div>
+                        <div class="p-4 border-t border-slate-700">
+                            <button onclick="toggleGameIntro()" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold">我準備好了！</button>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Leaderboard Modal
+            if (showLeaderboard) {
+                const currentWorldTitle = GAME_DATA.worlds[activeLeaderboardTab].title;
+                const filteredData = leaderboardData.filter(d => d.world && d.world.includes(GAME_DATA.worlds[activeLeaderboardTab].title.split('：')[1].split(' (')[0])); 
+
+                content += `
+                <div class="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fade-in">
+                    <div class="bg-slate-900 border border-amber-500/50 w-full max-w-2xl h-3/4 rounded-xl flex flex-col shadow-2xl">
+                        <div class="flex justify-between items-center p-4 border-b border-slate-700">
+                            <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2"><i data-lucide="trophy"></i> 英雄榜</h2>
+                            <button onclick="toggleLeaderboard()" class="text-slate-400 hover:text-white">✕</button>
+                        </div>
+                        <div class="flex bg-slate-800 p-2 gap-2 overflow-x-auto">
+                            ${GAME_DATA.worlds.map((w, i) => `
+                                <button onclick="switchLeaderboardTab(${i})" class="px-3 py-1 rounded text-sm whitespace-nowrap ${activeLeaderboardTab === i ? 'bg-amber-600 text-white' : 'bg-slate-700 text-slate-400'}">
+                                    W${i+1}
+                                </button>
+                            `).join('')}
+                        </div>
+                        <div class="flex-1 overflow-y-auto p-4">
+                            <table class="w-full text-sm leaderboard-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-rank">排名</th>
+                                        <th class="col-player">玩家</th>
+                                        <th class="col-role">角色</th>
+                                        <th class="col-level">等級</th>
+                                        <th class="col-score">積分</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-slate-300">
+                                    ${filteredData.length > 0 ? filteredData.map((d, i) => `
+                                        <tr>
+                                            <td class="font-bold text-center ${i < 3 ? 'text-yellow-400' : 'text-slate-500'}">#${i + 1}</td>
+                                            <td class="truncate">${d.name}</td>
+                                            <td class="truncate text-slate-400">${d.role}</td>
+                                            <td class="text-center text-slate-400">Lv.${d.level}</td>
+                                            <td class="text-right text-amber-500 font-mono font-bold">${d.score}</td>
+                                        </tr>
+                                    `).join('') : `<tr><td colspan="5" class="text-center py-8 text-slate-500">暫無資料，快去挑戰吧！</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            content += `</main>`;
+            
+            // 診斷按鈕 (只有開啟 showDebugButton 才會顯示)
+            if (showDebugButton) {
+                content += `<button onclick="diagnoseConnection()" class="fixed bottom-4 right-4 p-2 bg-slate-800/80 hover:bg-slate-700 text-slate-400 text-xs rounded-full border border-slate-600 flex items-center gap-1 z-50">
+                    <i data-lucide="wrench" class="w-3 h-3"></i> 測試連線
+                </button>`;
+            }
+
+            app.innerHTML = content;
+            lucide.createIcons();
+            const logEl = document.getElementById('battle-log-container');
+            if (logEl) logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function renderStart() {
+            return `<div class="flex flex-col items-center justify-center h-full p-6 bg-slate-900 text-center animate-fade-in relative">
+                <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center opacity-20 pointer-events-none"></div>
+                <div class="z-10 bg-slate-900/90 p-8 rounded-2xl border-4 border-amber-600 shadow-2xl max-w-md w-full backdrop-blur-sm">
+                    <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-200 mb-2 drop-shadow-sm">西寧探險家</h1>
+                    <h2 class="text-xl text-amber-200 mb-6 font-serif tracking-widest">四界傳說</h2>
+                    <div class="space-y-3">
+                        <button onclick="toCharSelect()" class="w-full py-4 text-lg bg-amber-600 hover:bg-amber-500 text-white border-b-4 border-amber-800 rounded-lg font-bold shadow-md transition-all active:scale-95 animate-pulse flex items-center justify-center gap-2">
+                            <i data-lucide="rocket"></i> 開始冒險
+                        </button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button onclick="toggleLeaderboard()" class="py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 border-b-4 border-slate-900 rounded-lg font-bold shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <i data-lucide="trophy"></i> 英雄榜
+                            </button>
+                            <button onclick="toggleGameIntro()" class="py-3 bg-slate-700 hover:bg-slate-600 text-slate-200 border-b-4 border-slate-900 rounded-lg font-bold shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <i data-lucide="book-open"></i> 遊戲介紹
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-slate-500 text-xs mt-6">穿梭於自然、社會與歷史的試煉！</p>
+                </div>
+            </div>`;
+        }
+
+        function renderCharSelect() {
+            return `<div class="flex flex-col items-center p-6 h-full overflow-y-auto bg-slate-900">
+                <div class="flex justify-between items-center w-full max-w-4xl mb-6">
+                    <h2 class="text-2xl font-bold text-white">選擇角色</h2>
+                    <button onclick="returnToMainMenu()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm border border-slate-600">返回主選單</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl pb-4">
+                    ${CHARACTERS.map(c => `
+                    <button onclick="selectCharacter('${c.id}')" class="bg-slate-800 p-4 rounded-xl border-2 ${c.id==='book_immortal'?'border-amber-500/50 col-span-1 md:col-span-2':'border-slate-700 hover:border-amber-500'} text-left transition-all">
+                        <div class="flex items-center gap-3 mb-2">
+                            <div class="p-2 rounded-full ${c.gender==='boy'?'bg-blue-900 text-blue-300':c.id==='book_immortal'?'bg-amber-900 text-amber-300':'bg-pink-900 text-pink-300'} flex items-center justify-center text-2xl h-12 w-12">
+                                ${c.avatar || (c.id === 'book_immortal' ? '📖' : '👤')}
+                            </div>
+                            <span class="text-lg font-bold text-white">${c.name}</span>
+                        </div>
+                        <p class="text-sm text-slate-400 mb-2">${c.desc}</p>
+                        <div class="text-xs text-amber-400 font-bold"><i data-lucide="sparkles" class="inline w-3 h-3"></i> ${c.abilityName}</div>
+                    </button>`).join('')}
+                </div>
+            </div>`;
+        }
+
+        function renderMap() {
+            const world = GAME_DATA.worlds[currentWorldIndex];
+            let svg = '';
+            const normalZones = world.zones.filter(z => !z.id.startsWith('boss'));
+            const bossZone = world.zones.find(z => z.id.startsWith('boss'));
+            
+            for (let i=0; i<normalZones.length-1; i++) {
+                const s = normalZones[i].mapPos, e = normalZones[i+1].mapPos;
+                const unlocked = unlockZone(normalZones[i+1].id);
+                svg += `<line x1="${s.left}" y1="${s.top}" x2="${e.left}" y2="${e.top}" stroke="${unlocked?'#f59e0b':'#475569'}" stroke-width="4" stroke-dasharray="${unlocked?'0':'5,5'}" />`;
+            }
+            if (bossZone && normalZones.length > 0) {
+                const lastNormal = normalZones[normalZones.length - 1];
+                const s = lastNormal.mapPos, e = bossZone.mapPos;
+                const unlocked = unlockZone(bossZone.id);
+                svg += `<line x1="${s.left}" y1="${s.top}" x2="${e.left}" y2="${e.top}" stroke="${unlocked?'#ef4444':'#475569'}" stroke-width="4" stroke-dasharray="${unlocked?'0':'5,5'}" />`;
+            }
+
+            let html = `<div class="relative w-full h-full overflow-hidden flex flex-col"><div class="absolute top-4 left-4 z-10 text-white font-bold text-xl drop-shadow-md">${world.title}</div><div class="relative flex-1 bg-grid-pattern"><svg class="absolute inset-0 w-full h-full pointer-events-none z-0">${svg}</svg>`;
+            
+            world.zones.forEach((z, i) => {
+                const unlocked = unlockZone(z.id), completed = player.completedZones.includes(z.id);
+                const isNext = unlocked && !completed && player.role !== 'Guide';
+                const isBoss = z.id.startsWith('boss');
+                let cls = "w-14 h-14 rounded-full flex items-center justify-center border-4 shadow-xl cursor-pointer transition-all ";
+                if (isBoss) cls += "w-16 h-16 "; 
+                if (completed && player.role!=='Guide') cls += "bg-amber-100 border-amber-500 text-amber-600 scale-100";
+                else if (isNext) cls += isBoss ? "bg-red-600 border-white text-white animate-pulse node-boss" : "bg-amber-600 border-white text-white animate-pulse node-pulse";
+                else if (!unlocked) cls += "bg-slate-700 border-slate-600 text-slate-500 grayscale";
+                else cls += isBoss ? "bg-red-900 border-red-500 text-red-500" : "bg-slate-800 border-amber-500 text-amber-500";
+
+                html += `<div onclick="showZonePopup('${z.id}')" class="absolute transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center" style="top:${z.mapPos.top};left:${z.mapPos.left}">
+                    <div class="${cls}"><i data-lucide="${completed && player.role!=='Guide' ? 'check-circle' : (!unlocked ? 'lock' : z.icon)}"></i></div>
+                    <div class="mt-1 px-2 py-0.5 rounded text-[10px] font-bold shadow bg-slate-900 border border-slate-700 text-slate-200 whitespace-nowrap">${z.name}</div>
+                </div>`;
+            });
+
+            if (showZoneInfo) {
+                const z = showZoneInfo, idx = world.zones.findIndex(x => x.id === z.id);
+                const btn = player.role === 'Guide' ? '查看攻略' : (player.completedZones.includes(z.id) ? '再次挑戰' : '開始挑戰');
+                const isBoss = z.id.startsWith('boss');
+                html += `<div class="absolute bottom-0 w-full bg-slate-900/95 border-t border-amber-500/30 p-6 rounded-t-2xl shadow-2xl z-50 animate-slide-up">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-slate-800 rounded-lg text-amber-500 border border-slate-700"><i data-lucide="${z.icon}"></i></div>
+                            <div><h3 class="text-xl font-bold ${isBoss ? 'text-red-500' : 'text-white'}">${z.name}</h3><p class="text-xs text-amber-200/70">Lv.${idx+1}</p></div>
+                        </div>
+                        <button onclick="closeZonePopup()" class="text-slate-400">✕</button>
+                    </div>
+                    <p class="text-sm text-slate-300 mb-4">${z.description || (isBoss ? '包含本世界所有題目的終極試煉！' : '準備好迎接挑戰了嗎？')}</p>
+                    <div class="flex flex-col gap-3">
+                        <button onclick="enterZone('${z.id}')" class="w-full py-3 ${isBoss ? 'bg-red-600 hover:bg-red-500' : 'bg-amber-600 hover:bg-amber-500'} text-white rounded-lg font-bold">${btn}</button>
+                        <button onclick="forgetClothes()" class="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium text-sm">我只是忘了收衣服你等我</button>
+                    </div>
+                </div>`;
+            }
+            return html + `</div></div>`;
+        }
+
+        function renderGuide() {
+            return `<div class="p-6 h-full flex flex-col"><div class="bg-slate-800 border-2 border-amber-500/50 rounded-xl p-6 flex-1 flex flex-col shadow-2xl relative overflow-hidden">
+                <div class="flex items-center gap-3 border-b border-slate-700 pb-4 mb-4">
+                    <i data-lucide="book-open" class="text-amber-400 w-8 h-8"></i>
+                    <h2 class="text-2xl font-bold text-white">地質天書</h2>
+                </div>
+                <div class="flex-1 overflow-y-auto pr-2 text-slate-300 leading-relaxed text-sm">
+                    ${GUIDE_DATA[currentZone.id] || (currentZone.id.startsWith('boss') ? '<p>魔王關沒有攻略，這是對你綜合實力的考驗！</p>' : '無資料')}
+                </div>
+                <button onclick="returnToMap()" class="mt-4 w-full py-3 bg-slate-700 text-white rounded-lg font-bold">返回地圖</button>
+            </div></div>`;
+        }
+
+        function renderBattle() {
+            if (!currentQuestion) return '';
+            const eHp = (currentEnemy.currentHp/225)*100; 
+            const pHp = (player.hp/player.maxHp)*100;
+            return `<div class="p-4 h-full flex flex-col gap-4 max-w-3xl mx-auto">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-800 p-3 rounded-xl border border-red-900/50 relative overflow-hidden">
+                        <div class="text-3xl mb-1 animate-bounce-custom">👾</div>
+                        <div class="font-bold text-red-400">${currentEnemy.name}</div>
+                        <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-red-600 h-full rounded" style="width:${eHp}%"></div></div>
+                    </div>
+                    <div class="bg-slate-800 p-3 rounded-xl border border-blue-900/50 relative overflow-hidden">
+                        <div class="text-3xl mb-1">🛡️</div>
+                        <div class="font-bold text-blue-400">${player.name}</div>
+                        <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-green-500 h-full rounded" style="width:${pHp}%"></div></div>
+                    </div>
+                </div>
+                <div id="battle-log-container" class="bg-black/40 p-3 rounded-lg h-32 overflow-y-auto text-sm text-slate-300 font-mono border border-slate-700/50">
+                    ${battleLog.map(l=>`<div class="mb-1 border-l-2 border-slate-600 pl-2">${l}</div>`).join('')}
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-600 flex-1 flex flex-col justify-center">
+                    <div class="mb-4"><h2 class="text-lg font-bold text-white">${currentQuestion.q}</h2></div>
+                    <div class="grid grid-cols-1 gap-2">
+                        ${currentQuestion.shuffledOptions.map((o,i)=>`<button onclick="handleAnswer(${i})" class="p-3 bg-slate-700 hover:bg-slate-600 text-left rounded text-slate-100 font-medium active:scale-95 transition-transform"><span class="text-amber-500 mr-2 font-bold">${String.fromCharCode(65+i)}.</span>${o}</button>`).join('')}
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function renderVictory() {
+            return `<div class="flex flex-col items-center justify-center h-full p-6 text-center animate-fade-in">
+                <div class="text-6xl mb-4 animate-bounce-custom">🏆</div>
+                <h1 class="text-3xl font-bold text-green-400 mb-2">攻略成功！</h1>
+                <p class="text-slate-400 mb-8">你通過了 ${currentZone.name} 的試煉。</p>
+                <div class="flex gap-4">
+                    <button onclick="returnToMap()" class="px-8 py-3 bg-slate-600 text-white rounded-lg font-bold shadow-lg">返回地圖</button>
+                    ${player.role !== 'Guide' ? `<button onclick="uploadScore()" class="px-8 py-3 bg-amber-600 text-white rounded-lg font-bold shadow-lg animate-pulse">上傳戰績</button>` : ''}
+                </div>
+            </div>`;
+        }
+
+        function renderGameOver() {
+            return `<div class="flex flex-col items-center justify-center h-full p-6 text-center animate-fade-in">
+                <div class="text-6xl mb-4">☠️</div>
+                <h1 class="text-3xl font-bold text-red-500 mb-2">探索失敗...</h1>
+                <button onclick="restartGame()" class="px-8 py-3 bg-red-800 text-white rounded-lg font-bold shadow-lg">重新開始</button>
+            </div>`;
+        }
+
+        renderApp();
+    </script>
+</body>
+</html>
