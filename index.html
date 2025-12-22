@@ -26,6 +26,27 @@
         @keyframes boss-pulse { 0%, 100% { box-shadow: 0 0 15px rgba(220, 38, 38, 0.6); transform: scale(1); } 50% { box-shadow: 0 0 30px rgba(220, 38, 38, 0.9); transform: scale(1.1); } }
         .node-boss { animation: boss-pulse 3s infinite; }
 
+        /* 戰鬥動畫 */
+        @keyframes attack-right { 0% { transform: translateX(0); } 50% { transform: translateX(60px) rotate(10deg); } 100% { transform: translateX(0); } }
+        @keyframes attack-left { 0% { transform: translateX(0); } 50% { transform: translateX(-60px) rotate(-10deg); } 100% { transform: translateX(0); } }
+        @keyframes damage-shake { 
+            0% { transform: translate(0, 0); filter: none; } 
+            20% { transform: translate(-10px, 0); filter: brightness(2) sepia(1) hue-rotate(-50deg) saturate(5); } 
+            40% { transform: translate(10px, 0); } 
+            60% { transform: translate(-10px, 0); } 
+            80% { transform: translate(10px, 0); } 
+            100% { transform: translate(0, 0); filter: none; } 
+        }
+        @keyframes float-up { 
+            0% { opacity: 1; transform: translateY(0) scale(1); } 
+            100% { opacity: 0; transform: translateY(-80px) scale(1.5); } 
+        }
+
+        .anim-attack-p { animation: attack-right 0.4s ease-in-out; z-index: 10; }
+        .anim-attack-e { animation: attack-left 0.4s ease-in-out; z-index: 10; }
+        .anim-damage { animation: damage-shake 0.5s ease-in-out; }
+        .anim-float-text { position: absolute; animation: float-up 1s ease-out forwards; font-weight: 900; text-shadow: 2px 2px 0 #000; pointer-events: none; z-index: 20; }
+
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -252,8 +273,10 @@
         let cheatCodeBuffer = "";
         let isQuestionsLoaded = false; 
         let showDebugButton = false; 
+        let isBattleAnimating = false; 
+        let floatingEffects = []; 
+        let activeAnimations = { player: '', enemy: '' }; // 新增：動畫狀態
         
-        // 新增：戰鬥統計
         let battleStats = { startTime: 0, correct: 0, attempts: 0, score: 0 };
 
         // --- HELPERS ---
@@ -263,14 +286,11 @@
             if (player.characterId === 'book_immortal') return true;
             const world = GAME_DATA.worlds[currentWorldIndex];
             
-            // Check if it is a boss zone
             if (zoneId.startsWith('boss')) {
                 const normalZones = world.zones.filter(z => !z.id.startsWith('boss'));
-                // Check if all normal zones are completed
                 return normalZones.every(z => player.completedZones.includes(z.id));
             }
             
-            // Normal zones are always unlocked
             return true;
         }
 
@@ -520,7 +540,7 @@
                         role: CHARACTERS.find(c => c.id === player.characterId).name,
                         world: GAME_DATA.worlds[currentWorldIndex].title,
                         level: player.level,
-                        score: currentWorldScore // 上傳當前世界的累積總分
+                        score: currentWorldScore 
                     };
 
                     addLog("正在上傳戰績...");
@@ -655,9 +675,7 @@
         }
 
         function startBattle(enemy) {
-            // 初始化戰鬥統計
             battleStats = { startTime: Date.now(), correct: 0, attempts: 0, score: 0 };
-
             const allQuestions = enemy.questions;
             
             let pool = [];
@@ -678,10 +696,8 @@
             }
 
             const battleQuestions = pool.slice(0, 15);
-            
             enemy.battleQuestions = battleQuestions;
             enemy.battleIndex = 0;
-
             currentEnemy = { ...enemy, currentHp: 225 }; 
             
             if (battleQuestions.length > 0) {
@@ -695,52 +711,103 @@
         }
 
         function handleAnswer(idx) {
+            if (isBattleAnimating) return; 
             if (!currentQuestion) return;
+            
+            isBattleAnimating = true;
             const isCorrect = idx === currentQuestion.correctIndex;
             
-            // 更新戰鬥統計
-            battleStats.attempts++;
+            const attacker = isCorrect ? 'player' : 'enemy';
+            const victim = isCorrect ? 'enemy' : 'player';
+            
+            activeAnimations.player = attacker === 'player' ? 'anim-attack-p' : '';
+            activeAnimations.enemy = attacker === 'enemy' ? 'anim-attack-e' : '';
+            renderApp();
 
+            let dmg = 0;
+            let heal = 0;
+            
             if (isCorrect) {
-                battleStats.correct++;
-                
-                const baseDmg = 15 + (player.stats.dmgBonus || 0);
-                currentEnemy.currentHp -= baseDmg;
-                addLog(`✅ 正確！傷害 ${baseDmg}！`);
-                if(!player.solvedQuestionIds.includes(currentQuestion.id)) player.solvedQuestionIds.push(currentQuestion.id);
-                if (player.stats.healOnHit > 0) player.hp = Math.min(player.maxHp, player.hp + player.stats.healOnHit);
-                const xpGain = Math.floor(15 * player.stats.xpBonus);
-                player.xp += xpGain;
-                if (player.xp >= player.maxXp) { player.xp -= player.maxXp; player.level++; player.maxXp = Math.floor(player.maxXp*1.5); player.hp = player.maxHp; addLog('🎉 升級！'); }
-                
-                currentEnemy.battleIndex++;
-                if (currentEnemy.currentHp <= 0 || currentEnemy.battleIndex >= currentEnemy.battleQuestions.length) {
-                    handleEnemyDefeat(currentEnemy);
-                } else {
-                    const nextQ = currentEnemy.battleQuestions[currentEnemy.battleIndex];
-                    setTimeout(() => { currentQuestion = prepareQuestion(nextQ); renderApp(); }, 1000);
-                }
+                dmg = 15 + (player.stats.dmgBonus || 0);
+                heal = player.stats.healOnHit || 0;
             } else {
-                const dmg = Math.max(1, 15 - player.stats.dmgReduction);
-                player.hp -= dmg;
-                addLog(`❌ 錯誤！受傷 ${dmg}`);
-                addLog(`正解：${currentQuestion.options[currentQuestion.a]}`);
-                if (player.hp <= 0) setTimeout(() => { gameState = 'GAMEOVER'; renderApp(); }, 1000);
-                else renderApp();
+                dmg = Math.max(1, 15 - player.stats.dmgReduction);
             }
+
+            setTimeout(() => {
+                activeAnimations.player = '';
+                activeAnimations.enemy = '';
+                activeAnimations[victim] = 'anim-damage';
+
+                const text = `-${dmg}`;
+                const x = isCorrect ? 75 : 25; 
+                
+                floatingEffects.push({ id: Date.now(), text: text, type: 'text-red-500', x: x, y: 40 });
+                if (isCorrect && heal > 0) {
+                    floatingEffects.push({ id: Date.now()+1, text: `+${heal}`, type: 'text-green-500', x: 25, y: 30 });
+                }
+                
+                renderApp();
+
+            }, 300);
+
+            setTimeout(() => {
+                activeAnimations.player = '';
+                activeAnimations.enemy = '';
+                battleStats.attempts++;
+
+                if (isCorrect) {
+                    battleStats.correct++;
+                    currentEnemy.currentHp -= dmg;
+                    addLog(`✅ 正確！傷害 ${dmg}！`);
+                    
+                    if(!player.solvedQuestionIds.includes(currentQuestion.id)) player.solvedQuestionIds.push(currentQuestion.id);
+                    
+                    if (heal > 0) {
+                        player.hp = Math.min(player.maxHp, player.hp + heal);
+                    }
+                    
+                    const xpGain = Math.floor(15 * player.stats.xpBonus);
+                    player.xp += xpGain;
+                    if (player.xp >= player.maxXp) { 
+                        player.xp -= player.maxXp; 
+                        player.level++; 
+                        player.maxXp = Math.floor(player.maxXp*1.5); 
+                        player.hp = player.maxHp; 
+                        addLog('🎉 升級！'); 
+                    }
+                    
+                    currentEnemy.battleIndex++;
+                    if (currentEnemy.currentHp <= 0 || currentEnemy.battleIndex >= currentEnemy.battleQuestions.length) {
+                        handleEnemyDefeat(currentEnemy);
+                    } else {
+                        const nextQ = currentEnemy.battleQuestions[currentEnemy.battleIndex];
+                        currentQuestion = prepareQuestion(nextQ);
+                    }
+                } else {
+                    player.hp -= dmg;
+                    addLog(`❌ 錯誤！受傷 ${dmg}`);
+                    addLog(`正解：${currentQuestion.options[currentQuestion.a]}`);
+                    if (player.hp <= 0) {
+                         gameState = 'GAMEOVER';
+                    }
+                }
+                
+                isBattleAnimating = false;
+                floatingEffects = []; 
+                renderApp();
+            }, 800);
         }
 
         function handleEnemyDefeat(enemy) {
-            // 計算本關積分
             const endTime = Date.now();
             const durationSec = Math.floor((endTime - battleStats.startTime) / 1000);
             const accuracy = battleStats.attempts > 0 ? (battleStats.correct / battleStats.attempts) : 0;
-            const timeBonus = Math.max(0, (300 - durationSec) * 10); // 300秒內，每快1秒+10分
+            const timeBonus = Math.max(0, (300 - durationSec) * 10); 
             const baseScore = battleStats.correct * 1000;
             
             const levelScore = Math.floor(baseScore * Math.pow(accuracy, 2) + timeBonus);
             
-            // 累積當前世界的總分
             if (!player.worldScores[currentWorldIndex]) {
                  player.worldScores[currentWorldIndex] = 0;
             }
@@ -1040,19 +1107,26 @@
             if (!currentQuestion) return '';
             const eHp = (currentEnemy.currentHp/225)*100; 
             const pHp = (player.hp/player.maxHp)*100;
+            const charAvatar = CHARACTERS.find(c => c.id === player.characterId)?.avatar || '🛡️';
+
             return `<div class="p-4 h-full flex flex-col gap-4 max-w-3xl mx-auto">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-800 p-3 rounded-xl border border-red-900/50 relative overflow-hidden">
-                        <div class="text-3xl mb-1 animate-bounce-custom">👾</div>
+                        <div id="enemy-avatar" class="text-3xl mb-1 animate-bounce-custom inline-block ${activeAnimations.enemy}">👾</div>
                         <div class="font-bold text-red-400">${currentEnemy.name}</div>
                         <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-red-600 h-full rounded" style="width:${eHp}%"></div></div>
                     </div>
                     <div class="bg-slate-800 p-3 rounded-xl border border-blue-900/50 relative overflow-hidden">
-                        <div class="text-3xl mb-1">🛡️</div>
+                        <div id="player-avatar" class="text-3xl mb-1 inline-block ${activeAnimations.player}">${charAvatar}</div>
                         <div class="font-bold text-blue-400">${player.name}</div>
                         <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-green-500 h-full rounded" style="width:${pHp}%"></div></div>
                     </div>
                 </div>
+                <!-- 浮動文字層 -->
+                <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                    ${floatingEffects.map(f => `<div class="anim-float-text ${f.type} text-4xl" style="left:${f.x}%; top:${f.y}%;">${f.text}</div>`).join('')}
+                </div>
+
                 <div id="battle-log-container" class="bg-black/40 p-3 rounded-lg h-32 overflow-y-auto text-sm text-slate-300 font-mono border border-slate-700/50">
                     ${battleLog.map(l=>`<div class="mb-1 border-l-2 border-slate-600 pl-2">${l}</div>`).join('')}
                 </div>
@@ -1066,7 +1140,6 @@
         }
 
         function renderVictory() {
-            // 判斷是否已經上傳過戰績
             const isUploaded = player.uploadedZones.includes(currentZone.id);
             const uploadBtn = isUploaded 
                 ? `<button disabled class="px-8 py-3 bg-slate-700 text-slate-500 rounded-lg font-bold shadow-lg cursor-not-allowed">已上傳</button>`
