@@ -739,12 +739,13 @@
                 activeAnimations.enemy = '';
                 activeAnimations[victim] = 'anim-damage';
 
+                const damageX = isCorrect ? 25 : 75; 
                 const text = `-${dmg}`;
-                const x = isCorrect ? 75 : 25; 
                 
-                floatingEffects.push({ id: Date.now(), text: text, type: 'text-red-500', x: x, y: 40 });
+                floatingEffects.push({ id: Date.now(), text: text, type: 'text-red-500', x: damageX, y: 40 });
+                
                 if (isCorrect && heal > 0) {
-                    floatingEffects.push({ id: Date.now()+1, text: `+${heal}`, type: 'text-green-500', x: 25, y: 30 });
+                    floatingEffects.push({ id: Date.now()+1, text: `+${heal}`, type: 'text-green-500', x: 75, y: 30 });
                 }
                 
                 renderApp();
