@@ -63,14 +63,17 @@
 
         /* Leaderboard Table Alignment */
         .leaderboard-table { table-layout: fixed; }
-        .leaderboard-table th { @apply text-left p-3 text-amber-500 border-b border-slate-600 font-bold bg-slate-800; }
-        .leaderboard-table td { @apply p-3 border-b border-slate-700/50 truncate; }
+        .leaderboard-table th { @apply text-left p-3 text-amber-500 border-b border-slate-600 font-bold bg-slate-800 text-xs sm:text-sm; }
+        .leaderboard-table td { @apply p-3 border-b border-slate-700/50 truncate text-xs sm:text-sm; }
         .leaderboard-table tr:hover { @apply bg-slate-800/50; }
-        .col-rank { width: 15%; text-align: center; }
-        .col-player { width: 30%; }
-        .col-role { width: 30%; }
-        .col-level { width: 15%; text-align: center; }
-        .col-score { width: 10%; text-align: right; }
+        
+        /* New Column Widths */
+        .col-rank { width: 12%; text-align: center; }
+        .col-player { width: 25%; }
+        .col-role { width: 23%; }
+        .col-level { width: 10%; text-align: center; }
+        .col-acc { width: 15%; text-align: center; } /* Accuracy */
+        .col-score { width: 15%; text-align: right; }
     </style>
 </head>
 <body class="overflow-hidden select-none h-screen flex flex-col">
@@ -113,7 +116,6 @@
             
             if (inputPlaceholder !== undefined) {
                 inputContainer.classList.remove('hidden');
-                // 如果有提供預設值就填入，否則清空
                 input.value = inputValue !== undefined ? inputValue : '';
                 input.placeholder = inputPlaceholder;
                 setTimeout(() => input.focus(), 100);
@@ -262,7 +264,7 @@
         // --- STATE ---
         let gameState = 'START'; 
         let currentWorldIndex = 0;
-        let player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
+        let player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], worldScores: [0, 0, 0, 0], worldStats: [{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0}] };
         let currentZone = null, currentEnemy = null, currentQuestion = null;
         let battleLog = [], enemyIndex = 0, showZoneInfo = null, questionCountInBattle = 0;
         let showCheerMessage = false;
@@ -441,7 +443,6 @@
         });
 
         function handleTitleClick() {
-            // Remove game state check to allow clicking anywhere
             if (!window.titleClickCount) window.titleClickCount = 0;
             window.titleClickCount++;
              
@@ -467,7 +468,6 @@
         }
 
         function confirmHome() {
-            // Only show confirmation if we are not already at START
             if (gameState === 'START') return;
             
             showModal({
@@ -519,7 +519,8 @@
                         role: CHARACTERS.find(c => c.id === player.characterId).name,
                         world: GAME_DATA.worlds[currentWorldIndex].title,
                         level: 99,
-                        score: 9999
+                        score: 9999,
+                        accuracy: "100%" // 密技預設100%
                     };
                     
                     fetch(GAS_API_URL, {
@@ -546,6 +547,10 @@
             const defaultCharName = CHARACTERS.find(c => c.id === player.characterId).name;
             const inputValue = (currentPlayerName && currentPlayerName !== defaultCharName) ? currentPlayerName : '';
             const currentWorldScore = player.worldScores[currentWorldIndex] || 0;
+            
+            // 計算當前世界的正確率
+            const wStats = player.worldStats[currentWorldIndex];
+            const accuracyVal = wStats.attempts > 0 ? ((wStats.correct / wStats.attempts) * 100).toFixed(1) + "%" : "0%";
 
             showModal({
                 title: '上傳戰績',
@@ -561,7 +566,8 @@
                         role: CHARACTERS.find(c => c.id === player.characterId).name,
                         world: GAME_DATA.worlds[currentWorldIndex].title,
                         level: player.level,
-                        score: currentWorldScore // 上傳當前世界的累積總分
+                        score: currentWorldScore,
+                        accuracy: accuracyVal
                     };
 
                     addLog("正在上傳戰績...");
@@ -594,8 +600,8 @@
         function fetchLeaderboard() {
             if (!GAS_API_URL) {
                 leaderboardData = [
-                    { name: "測試玩家1", role: "魔法師科貴", world: "第一世界", level: 5, score: 20 },
-                    { name: "測試玩家2", role: "女戰士妘萁", world: "第一世界", level: 3, score: 15 }
+                    { name: "測試玩家1", role: "魔法師科貴", world: "第一世界", level: 5, score: 20, accuracy: "80%" },
+                    { name: "測試玩家2", role: "女戰士妘萁", world: "第一世界", level: 3, score: 15, accuracy: "60%" }
                 ];
                 renderApp();
                 return;
@@ -643,7 +649,12 @@
         
         function returnToMainMenu() { 
             gameState = 'START';
-            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
+            player = { 
+                name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, 
+                items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], 
+                worldScores: [0, 0, 0, 0],
+                worldStats: [{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0}]
+            };
             battleLog = [];
             currentWorldIndex = 0;
             renderApp();
@@ -651,7 +662,11 @@
 
         function forgetClothes() {
             gameState = 'START';
-            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
+            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, 
+                items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], 
+                worldScores: [0, 0, 0, 0],
+                worldStats: [{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0}]
+            };
             battleLog = [];
             currentWorldIndex = 0;
             showCheerMessage = true;
@@ -664,7 +679,12 @@
 
         function selectCharacter(charId) {
             const char = CHARACTERS.find(c => c.id === charId);
-            player = { name: char.name, role: char.role, hp: char.stats.hp, maxHp: char.stats.hp, level: 1, xp: 0, maxXp: 50, items: [], completedZones: [], uploadedZones: [], characterId: char.id, stats: char.stats, solvedQuestionIds: [], worldScores: [0, 0, 0, 0] };
+            player = { 
+                name: char.name, role: char.role, hp: char.stats.hp, maxHp: char.stats.hp, level: 1, xp: 0, maxXp: 50, 
+                items: [], completedZones: [], uploadedZones: [], characterId: char.id, stats: char.stats, solvedQuestionIds: [], 
+                worldScores: [0, 0, 0, 0],
+                worldStats: [{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0}]
+            };
             gameState = 'MAP';
             battleLog = char.id === 'book_immortal' ? ['歡迎書仙！', '攻略模式開啟。'] : [`歡迎 ${char.name}！`, `能力：${char.abilityName}`];
             if(char.id === 'book_immortal') {
@@ -677,18 +697,29 @@
             const world = GAME_DATA.worlds[currentWorldIndex];
             const zone = world.zones.find(z => z.id === zoneId);
             
-            if (player.characterId !== 'book_immortal' && !zone.id.startsWith('boss')) {
-                if (zone.enemies[0].questions.length === 0) {
+            // CHECK 1: Prevent Boss zone if not unlocked
+            if (!unlockZone(zone.id)) {
+                return; 
+            }
+
+            // CHECK 2: Prevent Entering Completed Zones (Except Guide)
+            if (player.characterId !== 'book_immortal' && player.completedZones.includes(zone.id)) {
+                 return; // Button is disabled in UI, but double safety
+            }
+            
+            // CHECK 3: Check for Empty Questions (Anti-Bug)
+            // Skip check for Guide mode
+            if (player.characterId !== 'book_immortal') {
+                if (!zone.enemies[0].questions || zone.enemies[0].questions.length === 0) {
                     showModal({
-                        title: "題庫未就緒", 
-                        message: "尚未從雲端讀取到題目，請先按右下角的「測試連線」檢查。", 
+                        title: "題庫異常", 
+                        message: "無法讀取此關卡的題目。\n可能原因：\n1. 雲端題庫尚未載入 (請稍候或重整)\n2. 該關卡目前沒有題目", 
                         showCancel: false
                     });
                     return;
                 }
             }
 
-            if (!unlockZone(zone.id)) return;
             currentZone = zone;
             showZoneInfo = null;
             if (player.characterId === 'book_immortal') { gameState = 'GUIDE'; renderApp(); } 
@@ -777,9 +808,14 @@
                 activeAnimations.player = '';
                 activeAnimations.enemy = '';
                 battleStats.attempts++;
+                
+                // 更新當前世界的統計
+                player.worldStats[currentWorldIndex].attempts++;
 
                 if (isCorrect) {
                     battleStats.correct++;
+                    player.worldStats[currentWorldIndex].correct++;
+                    
                     currentEnemy.currentHp -= dmg;
                     addLog(`✅ 正確！傷害 ${dmg}！`);
                     
@@ -974,6 +1010,7 @@
                                         <th class="col-player">玩家</th>
                                         <th class="col-role">角色</th>
                                         <th class="col-level">等級</th>
+                                        <th class="col-acc">正確率</th> <!-- New Column -->
                                         <th class="col-score">積分</th>
                                     </tr>
                                 </thead>
@@ -984,9 +1021,10 @@
                                             <td class="truncate">${d.name}</td>
                                             <td class="truncate text-slate-400">${d.role}</td>
                                             <td class="text-center text-slate-400">Lv.${d.level}</td>
+                                            <td class="text-center text-slate-400">${d.accuracy || 'N/A'}</td> <!-- Display Accuracy -->
                                             <td class="text-right text-amber-500 font-mono font-bold">${d.score}</td>
                                         </tr>
-                                    `).join('') : `<tr><td colspan="5" class="text-center py-8 text-slate-500">暫無資料，快去挑戰吧！</td></tr>`}
+                                    `).join('') : `<tr><td colspan="6" class="text-center py-8 text-slate-500">暫無資料，快去挑戰吧！</td></tr>`}
                                 </tbody>
                             </table>
                         </div>
@@ -1097,6 +1135,18 @@
                 const z = showZoneInfo, idx = world.zones.findIndex(x => x.id === z.id);
                 const btn = player.role === 'Guide' ? '查看攻略' : (player.completedZones.includes(z.id) ? '再次挑戰' : '開始挑戰');
                 const isBoss = z.id.startsWith('boss');
+                
+                // Add conditional button text
+                let buttonHtml = '';
+                if (player.role === 'Guide') {
+                    buttonHtml = `<button onclick="enterZone('${z.id}')" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-bold">查看攻略</button>`;
+                } else if (player.completedZones.includes(z.id)) {
+                    buttonHtml = `<button disabled class="w-full py-3 bg-gray-600 text-gray-400 rounded-lg font-bold cursor-not-allowed">關卡已完成</button>`;
+                } else {
+                    const btnClass = isBoss ? 'bg-red-600 hover:bg-red-500' : 'bg-amber-600 hover:bg-amber-500';
+                    buttonHtml = `<button onclick="enterZone('${z.id}')" class="w-full py-3 ${btnClass} text-white rounded-lg font-bold">開始挑戰</button>`;
+                }
+
                 html += `<div class="absolute bottom-0 w-full bg-slate-900/95 border-t border-amber-500/30 p-6 rounded-t-2xl shadow-2xl z-50 animate-slide-up">
                     <div class="flex justify-between items-center mb-2">
                         <div class="flex items-center gap-3">
@@ -1107,7 +1157,7 @@
                     </div>
                     <p class="text-sm text-slate-300 mb-4">${z.description || (isBoss ? '包含本世界所有題目的終極試煉！' : '準備好迎接挑戰了嗎？')}</p>
                     <div class="flex flex-col gap-3">
-                        <button onclick="enterZone('${z.id}')" class="w-full py-3 ${isBoss ? 'bg-red-600 hover:bg-red-500' : 'bg-amber-600 hover:bg-amber-500'} text-white rounded-lg font-bold">${btn}</button>
+                        ${buttonHtml}
                         <button onclick="forgetClothes()" class="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium text-sm">我只是忘了收衣服你等我</button>
                     </div>
                 </div>`;
