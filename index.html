@@ -109,7 +109,7 @@
         function showModal({ title, message, inputPlaceholder, inputValue, showCancel = true, onConfirm }) {
             const modal = document.getElementById('custom-modal');
             document.getElementById('modal-title').innerText = title;
-            document.getElementById('modal-content').innerHTML = message || '';
+            document.getElementById('modal-content').innerText = message || '';
             
             const inputContainer = document.getElementById('modal-input-container');
             const input = document.getElementById('modal-input');
@@ -186,7 +186,7 @@
             'force2': `<div class="guide-content"><h3>⚖️ 測量力的大小</h3><ul><li><strong>工具</strong>：彈簧秤。</li><li><strong>單位</strong>：<span class="highlight">公克重 (gw)</span> 或 牛頓 (N)。</li><li><strong>虎克定律</strong>：在彈性限度內，<span class="highlight">彈簧伸長量與受力成正比</span>。<br>(掛越重，伸長越長。掛2倍重，伸長2倍)</li><li><strong>歸零</strong>：測量前要先歸零，且要在受力方向上歸零。</li></ul></div>`,
             'force3': `<div class="guide-content"><h3>🚫 摩擦力</h3><ul><li><strong>方向</strong>：永遠跟物體運動方向<span class="highlight">相反</span> (阻礙運動)。</li><li><strong>影響因素</strong> (只跟這兩點有關)：<br>1. <strong>接觸面材質</strong>：越粗糙，摩擦力越大。<br>2. <strong>垂直正向力(重量)</strong>：壓得越重，摩擦力越大。</li><li><strong>無關</strong>：跟接觸面積大小無關！</li></ul><div class="note">💡 拔河時鞋底要粗糙(增摩擦)；溜滑梯要光滑(減摩擦)。</div></div>`,
             'economy1': `<div class="guide-content"><h3>🌾 農業轉工業 (民國40-50年代)</h3><ul><li><strong>土地改革</strong> (順序必考)：<br>1. <strong>三七五減租</strong> (減輕佃農負擔)<br>2. <strong>公地放領</strong> (政府賣地給農民)<br>3. <strong>耕者有其田</strong> (地主多餘的地賣給農民)</li><li><strong>進口替代</strong>：自己做不再買國外的 (輕工業：紡織、食品)。</li><li><strong>出口導向</strong>：設立<span class="highlight">加工出口區</span> (高雄、楠梓、臺中)，引進外資，利用廉價勞力賺外匯。</li></ul></div>`,
-            'economy2': `<div class="guide-content"><h3>🏗️ 經濟起飛與轉型 (民國60年代後)</h3><ul><li><strong>十大建設</strong>：蔣經國推動。<br>1. <strong>交通</strong>：中山高、鐵路電氣化、中正機場。<br>2. <strong>重工業</strong>：中鋼、中船、石化工業。</li><li><strong>高科技產業</strong>：設立<span class="highlight">新竹科學園區</span> (台灣矽谷)。</li><li><strong>產業升級</strong>：從勞力密集(代工) → 技術/資本密集(研發、自創品牌)。</li></ul></div>`,
+            'economy2': `<div class="guide-content"><h3>🏗️ 經濟起飛與轉型 (民國60年代後)</h3><ul><li><strong>十大建設</strong>：蔣經國推動。<br>1. <strong>交通</strong>：中山高、鐵路電氣化、中正機場。<br>2. <strong>重工業</strong>：中鋼、中船、石化工業。</li><li><strong>高科技產業</strong>：設立<span class="highlight">新竹科學園區</span> (台灣矽谷)。</li><li><strong>產業升級</strong>：從代工(OEM)轉向研發。</li></ul></div>`,
             'society1': `<div class="guide-content"><h3>🚄 一日生活圈</h3><ul><li><strong>定義</strong>：交通革新縮短了「時間距離」。</li><li><strong>功臣</strong>：<span class="highlight">高速鐵路 (HSR)</span>、捷運、高速公路。</li><li><strong>生活圈</strong>：滿足就業、就學、購物、醫療的活動範圍。</li></ul></div>`,
             'society2': `<div class="guide-content"><h3>🏙️ 都市化現象</h3><ul><li><strong>定義</strong>：人口不斷向都市集中。</li><li><strong>推拉理論</strong>：<br>📥 <strong>拉力</strong> (都市)：就業機會多、交通便利、醫療好。<br>📤 <strong>推力</strong> (鄉村)：就業少、收入低。</li><li><strong>問題</strong>：<br>都市：房價高、塞車、噪音、熱島效應。<br>鄉村：人口老化、勞動力不足、隔代教養。</li></ul></div>`,
             'society3': `<div class="guide-content"><h3>📉 人口與永續</h3><ul><li><strong>少子化</strong>：生得少。原因：養育成本高、晚婚。</li><li><strong>高齡化</strong>：老得多。醫療進步壽命長。<br>→ 進入「高齡社會」，需長照、無障礙設施。</li><li><strong>地方創生</strong>：鼓勵青年回鄉創業，結合在地特色發展經濟，解決城鄉差距。</li></ul></div>`,
@@ -278,7 +278,7 @@
         let showDebugButton = false; 
         let isBattleAnimating = false; 
         let floatingEffects = []; 
-        let activeAnimations = { player: '', enemy: '' }; 
+        let activeAnimations = { player: '', enemy: '' }; // 新增：動畫狀態
         
         let battleStats = { startTime: 0, correct: 0, attempts: 0, score: 0 };
 
@@ -339,19 +339,11 @@
                     throw new Error("GAS 內部錯誤: " + data.message);
                 }
 
-                // 統計題目
                 let stats = "";
                 let total = 0;
-                
-                // 先重新載入題目以便統計 Boss 題數
-                processQuestionData(data);
-                
-                GAME_DATA.worlds.forEach((w, wIdx) => {
-                    stats += `\n🌍 ${w.title}:\n`;
-                    w.zones.forEach(z => {
-                         stats += `  - ${z.name} (${z.id}): ${z.enemies[0].questions.length} 題\n`;
-                         if (!z.id.startsWith('boss')) total += z.enemies[0].questions.length;
-                    });
+                Object.keys(data).forEach(zoneId => {
+                    stats += `${zoneId}: ${data[zoneId].length} 題\n`;
+                    total += data[zoneId].length;
                 });
 
                 if (total === 0) {
@@ -362,10 +354,11 @@
                     });
                 } else {
                     showModal({
-                        title: "連線診斷報告", 
-                        message: `成功連線！\n詳細題數分佈：\n${stats}\n\n如果不見題目，請重新整理網頁。`,
+                        title: "連線診斷成功", 
+                        message: `成功讀取到 ${total} 題！\n\n詳細分佈：\n${stats}\n\n如果不見題目，請重新整理網頁。`,
                         showCancel: false
                     });
+                    processQuestionData(data);
                 }
 
             } catch (e) {
@@ -647,6 +640,22 @@
         function toggleGameIntro() {
             showGameIntro = !showGameIntro;
             renderApp();
+        }
+
+        function formatAccuracy(val) {
+            if (val === undefined || val === null || val === '') return '0%';
+            const str = val.toString();
+            if (str.includes('%')) return str;
+            const num = parseFloat(str);
+            if (isNaN(num)) return '0%';
+            
+            // 如果數值小於等於 1，假設是小數格式 (如 0.789)，轉為百分比
+            // 如果數值大於 1，假設已經是百分比數值 (如 80)，直接加 %
+            if (num <= 1) {
+                return (num * 100).toFixed(1) + '%';
+            } else {
+                return num + '%';
+            }
         }
 
         // --- ACTIONS ---
@@ -1037,7 +1046,7 @@
                                             <td class="truncate">${d.name}</td>
                                             <td class="truncate text-slate-400">${d.role}</td>
                                             <td class="text-center text-slate-400">Lv.${d.level}</td>
-                                            <td class="text-center text-slate-400">${d.accuracy || 'N/A'}</td> <!-- Display Accuracy -->
+                                            <td class="text-center text-slate-400">${formatAccuracy(d.accuracy)}</td>
                                             <td class="text-right text-amber-500 font-mono font-bold">${d.score}</td>
                                         </tr>
                                     `).join('') : `<tr><td colspan="6" class="text-center py-8 text-slate-500">暫無資料，快去挑戰吧！</td></tr>`}
