@@ -680,23 +680,6 @@
             renderApp();
         }
 
-        function forgetClothes() {
-            gameState = 'START';
-            player = { name: '', role: '', hp: 100, maxHp: 100, level: 1, xp: 0, maxXp: 50, 
-                items: [], completedZones: [], uploadedZones: [], characterId: null, stats: {}, solvedQuestionIds: [], 
-                worldScores: [0, 0, 0, 0],
-                worldStats: [{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0},{correct:0,attempts:0}]
-            };
-            battleLog = [];
-            currentWorldIndex = 0;
-            showCheerMessage = true;
-            renderApp();
-            setTimeout(() => {
-                showCheerMessage = false;
-                renderApp();
-            }, 3000);
-        }
-
         function selectCharacter(charId) {
             const char = CHARACTERS.find(c => c.id === charId);
             player = { 
@@ -1183,7 +1166,7 @@
                     <p class="text-sm text-slate-300 mb-4">${z.description || (isBoss ? '包含本世界所有題目的終極試煉！' : '準備好迎接挑戰了嗎？')}</p>
                     <div class="flex flex-col gap-3">
                         ${buttonHtml}
-                        <button onclick="forgetClothes()" class="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium text-sm">我只是忘了收衣服你等我</button>
+                        <button onclick="closeZonePopup()" class="w-full py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg font-bold">我再想想</button>
                     </div>
                 </div>`;
             }
