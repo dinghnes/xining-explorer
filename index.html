@@ -286,11 +286,14 @@
             if (player.characterId === 'book_immortal') return true;
             const world = GAME_DATA.worlds[currentWorldIndex];
             
+            // Check if it is a boss zone
             if (zoneId.startsWith('boss')) {
                 const normalZones = world.zones.filter(z => !z.id.startsWith('boss'));
+                // Check if all normal zones are completed
                 return normalZones.every(z => player.completedZones.includes(z.id));
             }
             
+            // Normal zones are always unlocked
             return true;
         }
 
@@ -438,10 +441,14 @@
         });
 
         function handleTitleClick() {
-             if (gameState !== 'MAP') return;
-             if (!window.titleClickCount) window.titleClickCount = 0;
-             window.titleClickCount++;
+            // Remove game state check to allow clicking anywhere
+            if (!window.titleClickCount) window.titleClickCount = 0;
+            window.titleClickCount++;
              
+            if (window.titleClickCount === 1) {
+                 confirmHome();
+            }
+
              if (window.titleClickCount >= 5) {
                  window.titleClickCount = 0;
                  showModal({
@@ -457,6 +464,20 @@
              
              if (window.titleClickTimer) clearTimeout(window.titleClickTimer);
              window.titleClickTimer = setTimeout(() => { window.titleClickCount = 0; }, 2000);
+        }
+
+        function confirmHome() {
+            // Only show confirmation if we are not already at START
+            if (gameState === 'START') return;
+            
+            showModal({
+                title: '回到首頁',
+                message: '確定要回到首頁嗎？\n目前的冒險進度將會遺失。',
+                showCancel: true,
+                onConfirm: () => {
+                    returnToMainMenu();
+                }
+            });
         }
 
         function activateCheat() {
@@ -540,7 +561,7 @@
                         role: CHARACTERS.find(c => c.id === player.characterId).name,
                         world: GAME_DATA.worlds[currentWorldIndex].title,
                         level: player.level,
-                        score: currentWorldScore 
+                        score: currentWorldScore // 上傳當前世界的累積總分
                     };
 
                     addLog("正在上傳戰績...");
@@ -698,7 +719,7 @@
             const battleQuestions = pool.slice(0, 15);
             enemy.battleQuestions = battleQuestions;
             enemy.battleIndex = 0;
-            currentEnemy = { ...enemy, currentHp: 225 }; 
+            currentEnemy = { ...enemy, currentHp: enemy.hp || 225, maxHp: enemy.hp || 225 }; 
             
             if (battleQuestions.length > 0) {
                 currentQuestion = prepareQuestion(battleQuestions[0]);
@@ -857,6 +878,9 @@
                         </div>` : ''}
                     </div>
                     <div class="flex items-center gap-2">
+                        <!-- Add Home Button -->
+                        <button onclick="confirmHome()" class="p-1.5 bg-slate-700 hover:bg-slate-600 rounded text-slate-200 shadow" title="回到首頁"><i data-lucide="home" class="w-4 h-4"></i></button>
+                        
                         ${player.role !== 'Guide' ? `<button onclick="toggleLeaderboard()" class="p-1.5 bg-yellow-600 hover:bg-yellow-500 rounded text-white shadow"><i data-lucide="trophy" class="w-4 h-4"></i></button>` : ''}
                         <div class="text-xs text-slate-300">Lv.${player.level}</div>
                         <button onclick="returnToMap()" class="px-2 py-1 bg-slate-700 text-xs rounded">地圖</button>
@@ -1106,21 +1130,33 @@
 
         function renderBattle() {
             if (!currentQuestion) return '';
-            const eHp = (currentEnemy.currentHp/225)*100; 
-            const pHp = (player.hp/player.maxHp)*100;
+            const eMax = currentEnemy.maxHp || 225;
+            const eHpVal = Math.max(0, currentEnemy.currentHp);
+            const eHpPercent = (eHpVal / eMax) * 100; 
+            
+            const pMax = player.maxHp;
+            const pHpVal = Math.max(0, player.hp);
+            const pHpPercent = (pHpVal / pMax) * 100;
+            
             const charAvatar = CHARACTERS.find(c => c.id === player.characterId)?.avatar || '🛡️';
 
             return `<div class="p-4 h-full flex flex-col gap-4 max-w-3xl mx-auto">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="bg-slate-800 p-3 rounded-xl border border-red-900/50 relative overflow-hidden">
                         <div id="enemy-avatar" class="text-3xl mb-1 animate-bounce-custom inline-block ${activeAnimations.enemy}">👾</div>
-                        <div class="font-bold text-red-400">${currentEnemy.name}</div>
-                        <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-red-600 h-full rounded" style="width:${eHp}%"></div></div>
+                        <div class="flex justify-between items-baseline">
+                            <div class="font-bold text-red-400 text-sm truncate mr-1">${currentEnemy.name}</div>
+                            <div class="text-xs text-red-300 font-mono">${eHpVal}/${eMax}</div>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-red-600 h-full rounded transition-all duration-300" style="width:${eHpPercent}%"></div></div>
                     </div>
                     <div class="bg-slate-800 p-3 rounded-xl border border-blue-900/50 relative overflow-hidden">
                         <div id="player-avatar" class="text-3xl mb-1 inline-block ${activeAnimations.player}">${charAvatar}</div>
-                        <div class="font-bold text-blue-400">${player.name}</div>
-                        <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-green-500 h-full rounded" style="width:${pHp}%"></div></div>
+                        <div class="flex justify-between items-baseline">
+                            <div class="font-bold text-blue-400 text-sm truncate mr-1">${player.name}</div>
+                            <div class="text-xs text-blue-300 font-mono">${pHpVal}/${pMax}</div>
+                        </div>
+                        <div class="w-full bg-slate-900 h-2 rounded mt-1"><div class="bg-green-500 h-full rounded transition-all duration-300" style="width:${pHpPercent}%"></div></div>
                     </div>
                 </div>
                 <!-- 浮動文字層 -->
