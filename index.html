@@ -167,6 +167,7 @@
             { id: 'yunqi', name: '女戰士妘萁', gender: 'girl', role: 'Warrior', desc: '亞馬遜的後裔，擅長防禦敵人的攻擊。', abilityName: '戰鬥格擋', abilityDesc: '答錯時受到的傷害減少 5 點', stats: { hp: 110, xpBonus: 1.0, dmgReduction: 5, healOnHit: 0 }, avatar: '🧝‍♀️' },
             { id: 'youchen', name: '死靈法師佑辰', gender: 'boy', role: 'Necromancer', desc: '來自幽冥的召喚師，能從答題中汲取生命能量。', abilityName: '靈魂汲取', abilityDesc: '答對問題回復 10 點 HP', stats: { hp: 90, xpBonus: 1.0, dmgReduction: 0, healOnHit: 10 }, avatar: '💀' },
             { id: 'bingjia', name: '一拳超人秉家', gender: 'boy', role: 'Hero', desc: '興趣是當英雄，每天都做100下伏地挺身。', abilityName: '認真答題', abilityDesc: '答對造成 25 點傷害 (一般為15)', stats: { hp: 100, xpBonus: 1.0, dmgReduction: 0, healOnHit: 0, dmgBonus: 10 }, avatar: '👊' },
+            { id: 'yizhen', name: '哥布林女神宜臻', gender: 'girl', role: 'Goblin', desc: '統領哥布林一族的女神，擁有令人難以抗拒的魅力。', abilityName: '綠色奇蹟', abilityDesc: '答對時傷害+5且回復3點HP', stats: { hp: 100, xpBonus: 1.0, dmgReduction: 0, healOnHit: 3, dmgBonus: 5 }, avatar: '🧌' },
             { id: 'book_immortal', name: '西寧書仙老頭', gender: 'elder', role: 'Guide', desc: '傳說中隱居在圖書館深處的老者，知曉所有奧祕。', abilityName: '萬卷天書', abilityDesc: '無法戰鬥與答題，但能查看所有關卡的重點攻略。', stats: { hp: 1, xpBonus: 0, dmgReduction: 0, healOnHit: 0 }, avatar: '👴' }
         ];
 
@@ -899,15 +900,6 @@
             const app = document.getElementById('app');
             let content = '';
             
-            if (showCheerMessage) {
-                content += `
-                <div class="fixed top-0 left-0 w-full h-full flex items-center justify-center z-50 bg-black/80 pointer-events-none animate-fade-in">
-                    <div class="bg-amber-600 text-white px-8 py-4 rounded-xl text-2xl font-bold shadow-2xl transform scale-110">
-                        加油好嗎?
-                    </div>
-                </div>`;
-            }
-
             if (gameState !== 'START' && gameState !== 'CHAR_SELECT') {
                 content += `
                 <header class="bg-slate-900 border-b border-slate-800 p-2 flex justify-between items-center z-20 shadow-lg">
