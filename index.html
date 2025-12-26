@@ -279,7 +279,7 @@
         let showDebugButton = false; 
         let isBattleAnimating = false; 
         let floatingEffects = []; 
-        let activeAnimations = { player: '', enemy: '' }; // 新增：動畫狀態
+        let activeAnimations = { player: '', enemy: '' }; 
         
         let battleStats = { startTime: 0, correct: 0, attempts: 0, score: 0 };
 
@@ -290,14 +290,11 @@
             if (player.characterId === 'book_immortal') return true;
             const world = GAME_DATA.worlds[currentWorldIndex];
             
-            // Check if it is a boss zone
             if (zoneId.startsWith('boss')) {
                 const normalZones = world.zones.filter(z => !z.id.startsWith('boss'));
-                // Check if all normal zones are completed
                 return normalZones.every(z => player.completedZones.includes(z.id));
             }
             
-            // Normal zones are always unlocked
             return true;
         }
 
@@ -373,12 +370,10 @@
 
         function processQuestionData(data) {
             let count = 0;
-            // 1. Populate Normal Zones
             GAME_DATA.worlds.forEach(w => {
                 w.zones.forEach(z => {
                     if (data[z.id] && Array.isArray(data[z.id])) {
                         const enemy = z.enemies[0];
-                        // Clear old to avoid duplicates on re-fetch
                         enemy.questions = [];
                         enemy.questions.push(...data[z.id]);
                         count += data[z.id].length;
@@ -386,7 +381,6 @@
                 });
             });
             
-            // 2. Re-populate Boss Questions (Aggregate from normal zones)
             GAME_DATA.worlds.forEach(world => {
                 const bossZone = world.zones.find(z => z.id.startsWith('boss'));
                 if (bossZone) {
@@ -960,6 +954,7 @@
                                 <li><strong>妘萁</strong>：答錯減傷，容錯率高。</li>
                                 <li><strong>佑辰</strong>：答對大幅回血，生存專家。</li>
                                 <li><strong>秉家</strong>：攻擊力超高，一擊必殺。</li>
+                                <li><strong>宜臻</strong>：傷害+5且回復3HP，攻守兼備。</li>
                                 <li><strong>書仙老頭</strong>：無法戰鬥，專門用來查看「攻略筆記」。</li>
                             </ul>
                             <h3 class="text-lg font-bold text-white">玩法說明</h3>
@@ -986,13 +981,16 @@
 
             if (showLeaderboard) {
                 const currentWorldTitle = GAME_DATA.worlds[activeLeaderboardTab].title;
-                const filteredData = leaderboardData.filter(d => d.world && d.world.includes(GAME_DATA.worlds[activeLeaderboardTab].title.split('：')[1].split(' (')[0])); 
+                const filteredData = leaderboardData
+                    .filter(d => d.world && d.world.includes(GAME_DATA.worlds[activeLeaderboardTab].title.split('：')[1].split(' (')[0]))
+                    .sort((a, b) => b.score - a.score)
+                    .slice(0, 300);
 
                 content += `
                 <div class="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-4 animate-fade-in">
                     <div class="bg-slate-900 border border-amber-500/50 w-full max-w-2xl h-3/4 rounded-xl flex flex-col shadow-2xl">
                         <div class="flex justify-between items-center p-4 border-b border-slate-700">
-                            <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2"><i data-lucide="trophy"></i> 英雄榜</h2>
+                            <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2"><i data-lucide="trophy"></i> 英雄榜 (前300名)</h2>
                             <button onclick="toggleLeaderboard()" class="text-slate-400 hover:text-white">✕</button>
                         </div>
                         <div class="flex bg-slate-800 p-2 gap-2 overflow-x-auto">
